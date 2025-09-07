@@ -1,0 +1,59 @@
+# React y React Router
+1.npm install react react-dom react-router-dom
+
+# Axios
+npm install axios
+
+#toastify
+npm install react-toastify
+
+#zod
+npm install zod
+
+#
+npm install react-hook-form
+npm install @hookform/resolvers
+
+# shoppint ions
+npm install react-icons
+
+
+# ReactNode' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+import  { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+
+# aante Sidebar despiet SideBar
+Already included file name 'c:/Users/Usuario/Documents/si1_projects/library/f/l/src/components/Sidebar.tsx' differs from file name 'c:/Users/Usuario/Documents/si1_projects/library/f/l/src/components/SideBar.tsx' only in casing.
+  The file is in the program because:
+    Imported via './Sidebar' from file 'c:/Users/Usuario/Documents/si1_projects/library/f/l/src/components/Layout.tsx'
+    Matched by include pattern 'src' in 'c:/Users/Usuario/Documents/si1_projects/library/f/l/tsconfig.app.json'
+
+
+
+# jwt
+npm install jwt-decode
+npm install --save-dev @types/jwt-decode
+
+# Instala un library de Dual‑Listbox
+npm install react-dual-listbox
+
+
+
+
+npm run dev
+
+git add .
+git commit -m "Primer commit"
+git push -u origin main
+
+NSTRUCCIONES:
+1.leer todo los archivos .py
+
+cuando se hace un post a api/usuarios/ al crear un neuvo usuario teno el error
+Bad Request: /api/usuarios/ y registrar en logdeail lo que se esta haciendo
+
+#USERNME AND AODSOWR
+ozzy
+cliente2025
+
+solamente te paso loasarchiivo mas tardete hare preguntas ok?
