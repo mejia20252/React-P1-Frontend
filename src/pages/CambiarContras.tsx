@@ -1,9 +1,11 @@
 // src/pages/ChangePassword.tsx
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axiosInstance from "../app/axiosInstance";
-import { toUiError } from "../api/error"; // ⬅️ helper centralizado
-import { useAuth } from "../contexts/AuthContext";
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../app/axiosInstance';
+import { toUiError } from '../api/error';
+import { useAuth } from '../contexts/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 type FormState = {
   current_password: string;
@@ -22,86 +24,64 @@ export async function changePassword(userId: number, payload: ChangePasswordPayl
   });
 }
 
-// Pequeños componentes de iconos (SVG inline)
-function EyeIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path strokeWidth="2" d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12Z" />
-      <circle cx="12" cy="12" r="3.5" strokeWidth="2" />
-    </svg>
-  );
-}
-function EyeSlashIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path strokeWidth="2" d="M3 3l18 18" />
-      <path strokeWidth="2" d="M1.5 12S5 5.5 12 5.5c2.23 0 4.14.58 5.74 1.45M22.5 12S19 18.5 12 18.5c-2.23 0-4.14-.58-5.74-1.45" />
-      <path strokeWidth="2" d="M9.5 9.5A3.5 3.5 0 0012 15.5c.51 0 1-.11 1.45-.3" />
-    </svg>
-  );
-}
-
 export default function ChangePassword() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const { user: authUser, signout } = useAuth();
 
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
-  const [fieldErrs, setFieldErrs] = useState<Record<string, string[]>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   const [form, setForm] = useState<FormState>({
-    current_password: "",
-    new_password: "",
-    confirm_new_password: "",
+    current_password: '',
+    new_password: '',
+    confirm_new_password: '',
   });
 
-  // Estados para mostrar/ocultar cada campo
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Solo usamos el id del AuthContext
   const myId = useMemo(() => authUser?.id ?? null, [authUser]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((s) => ({ ...s, [e.target.name]: e.target.value }));
-    // Si se edita un campo, limpiamos su error específico para mejor UX
-    if (fieldErrs[e.target.name]) {
-      const { [e.target.name]: _removed, ...rest } = fieldErrs;
-      setFieldErrs(rest);
+    if (fieldErrors[e.target.name]) {
+      const { [e.target.name]: _removed, ...rest } = fieldErrors;
+      setFieldErrors(rest);
     }
   };
 
   const validate = (): string | null => {
     if (!form.current_password || form.current_password.length < 1) {
-      return "Debes ingresar tu contraseña actual.";
+      return 'Debes ingresar tu contraseña actual.';
     }
     if (!form.new_password || form.new_password.length < 6) {
-      return "La nueva contraseña debe tener al menos 6 caracteres.";
+      return 'La nueva contraseña debe tener al menos 6 caracteres.';
     }
     if (form.new_password === form.current_password) {
-      return "La nueva contraseña no puede ser igual a la actual.";
+      return 'La nueva contraseña no puede ser igual a la actual.';
     }
     if (form.new_password !== form.confirm_new_password) {
-      return "La confirmación no coincide.";
+      return 'La confirmación no coincide.';
     }
     return null;
   };
 
-  const hs = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErr(null);
-    setOk(null);
-    setFieldErrs({});
+    setError(null);
+    setSuccess(null);
+    setFieldErrors({});
 
-    const clientErr = validate();
-    if (clientErr) {
-      setErr(clientErr);
+    const clientError = validate();
+    if (clientError) {
+      setError(clientError);
       return;
     }
     if (!myId) {
-      setErr("No se pudo identificar al usuario.");
+      setError('No se pudo identificar al usuario.');
       return;
     }
 
@@ -112,143 +92,156 @@ export default function ChangePassword() {
         new_password: form.new_password,
         confirm_new_password: form.confirm_new_password,
       });
-      setOk("Contraseña actualizada. Vuelve a iniciar sesión.");
+      setSuccess('Contraseña actualizada. Vuelve a iniciar sesión.');
       setTimeout(() => {
         signout?.();
-        nav("/login");
-      }, 800);
+        navigate('/login');
+      }, 1500);
     } catch (error) {
       const ui = toUiError(error);
-      setErr(ui.message || "No se pudo cambiar la contraseña.");
-      setFieldErrs(ui.fields ?? {});
+      setError(ui.message || 'No se pudo cambiar la contraseña.');
+      setFieldErrors(ui.fields ?? {});
     } finally {
       setLoading(false);
     }
   };
 
-  // Helper para mostrar errores bajo inputs
   const renderFieldError = (name: keyof FormState) =>
-    fieldErrs?.[name]?.length ? (
-      <p className="text-xs text-red-600 mt-1">{fieldErrs[name].join(" ")}</p>
+    fieldErrors?.[name]?.length ? (
+      <p className="mt-1 text-sm text-red-600">{fieldErrors[name].join(' ')}</p>
     ) : null;
 
-  // Botón reutilizable de mostrar/ocultar
-  const ToggleBtn = ({
-    shown,
-    onClick,
-    labelShown = "Ocultar contraseña",
-    labelHidden = "Mostrar contraseña",
-  }: {
-    shown: boolean;
-    onClick: () => void;
-    labelShown?: string;
-    labelHidden?: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={shown ? labelShown : labelHidden}
-      className="absolute inset-y-0 right-2 flex items-center p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-      title={shown ? labelShown : labelHidden}
-    >
-      {shown ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-    </button>
-  );
-
   return (
-    <div className="mx-auto max-w-md p-6">
-      <h1 className="text-2xl font-semibold mb-4">Cambiar contraseña</h1>
-
-      <form noValidate onSubmit={hs} className="space-y-4">
-        {/* Contraseña actual */}
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="current_password">
-            Contraseña actual
-          </label>
-          <div className="relative">
-            <input
-              id="current_password"
-              name="current_password"
-              type={showCurrent ? "text" : "password"}
-              autoComplete="current-password"
-              className="w-full rounded-md border px-3 py-2 pr-10 outline-none focus:ring"
-              value={form.current_password}
-              onChange={onChange}
-              required
-            />
-            <ToggleBtn shown={showCurrent} onClick={() => setShowCurrent((s) => !s)} />
-          </div>
-          {renderFieldError("current_password")}
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50">
+      <div className="w-full max-w-lg p-6 space-y-6 bg-white rounded-lg shadow-xl md:p-8">
+        <div className="flex justify-between items-center mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center text-sm font-medium text-gray-600 transition-colors hover:text-blue-600"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+            Atrás
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Cambiar Contraseña
+          </h1>
         </div>
-
-        {/* Nueva contraseña */}
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="new_password">
-            Nueva contraseña
-          </label>
-          <div className="relative">
-            <input
-              id="new_password"
-              name="new_password"
-              type={showNew ? "text" : "password"}
-              autoComplete="new-password"
-              className="w-full rounded-md border px-3 py-2 pr-10 outline-none focus:ring"
-              value={form.new_password}
-              onChange={onChange}
-              required
-              minLength={6}
-            />
-            <ToggleBtn shown={showNew} onClick={() => setShowNew((s) => !s)} />
+        <form noValidate onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 text-sm text-center text-red-700 bg-red-100 rounded-md">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="p-3 text-sm text-center text-green-700 bg-green-100 rounded-md">
+              {success}
+            </div>
+          )}
+          <div>
+            <label
+              className="block mb-1 text-sm font-medium text-gray-700"
+              htmlFor="current_password"
+            >
+              Contraseña actual
+            </label>
+            <div className="relative">
+              <input
+                id="current_password"
+                name="current_password"
+                type={showCurrent ? 'text' : 'password'}
+                autoComplete="current-password"
+                className="block w-full px-4 py-2 text-gray-900 transition-colors border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={form.current_password}
+                onChange={onChange}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent((s) => !s)}
+                aria-label={showCurrent ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                title={showCurrent ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                <FontAwesomeIcon icon={showCurrent ? faEyeSlash : faEye} />
+              </button>
+            </div>
+            {renderFieldError('current_password')}
           </div>
-          <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres.</p>
-          {renderFieldError("new_password")}
-        </div>
-
-        {/* Confirmar nueva contraseña */}
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="confirm_new_password">
-            Confirmar nueva contraseña
-          </label>
-          <div className="relative">
-            <input
-              id="confirm_new_password"
-              name="confirm_new_password"
-              type={showConfirm ? "text" : "password"}
-              autoComplete="new-password"
-              className="w-full rounded-md border px-3 py-2 pr-10 outline-none focus:ring"
-              value={form.confirm_new_password}
-              onChange={onChange}
-              required
-            />
-            <ToggleBtn shown={showConfirm} onClick={() => setShowConfirm((s) => !s)} />
+          <div>
+            <label
+              className="block mb-1 text-sm font-medium text-gray-700"
+              htmlFor="new_password"
+            >
+              Nueva contraseña
+            </label>
+            <div className="relative">
+              <input
+                id="new_password"
+                name="new_password"
+                type={showNew ? 'text' : 'password'}
+                autoComplete="new-password"
+                className="block w-full px-4 py-2 text-gray-900 transition-colors border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={form.new_password}
+                onChange={onChange}
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew((s) => !s)}
+                aria-label={showNew ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                title={showNew ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                <FontAwesomeIcon icon={showNew ? faEyeSlash : faEye} />
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres.</p>
+            {renderFieldError('new_password')}
           </div>
-          {renderFieldError("confirm_new_password")}
-        </div>
-
-        {err && (
-          <div className="rounded-md bg-red-50 border border-red-200 text-red-700 p-3 text-sm">
-            {err}
+          <div>
+            <label
+              className="block mb-1 text-sm font-medium text-gray-700"
+              htmlFor="confirm_new_password"
+            >
+              Confirmar nueva contraseña
+            </label>
+            <div className="relative">
+              <input
+                id="confirm_new_password"
+                name="confirm_new_password"
+                type={showConfirm ? 'text' : 'password'}
+                autoComplete="new-password"
+                className="block w-full px-4 py-2 text-gray-900 transition-colors border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={form.confirm_new_password}
+                onChange={onChange}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((s) => !s)}
+                aria-label={showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                title={showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                <FontAwesomeIcon icon={showConfirm ? faEyeSlash : faEye} />
+              </button>
+            </div>
+            {renderFieldError('confirm_new_password')}
           </div>
-        )}
-        {ok && (
-          <div className="rounded-md bg-green-50 border border-green-200 text-green-700 p-3 text-sm">
-            {ok}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60"
-        >
-          {loading ? "Guardando..." : "Cambiar contraseña"}
-        </button>
-      </form>
-
-      {/* Botones de navegación de tu ejemplo */}
-      <button onClick={() => { nav(-1); }} className="mt-4 underline">vakkj</button>
-      <br />
-      <button onClick={() => { nav('/administrador/dashboard'); }} className="underline">cacel</button>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-colors duration-200 ${
+              loading
+                ? 'bg-blue-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {loading ? 'Guardando...' : 'Cambiar contraseña'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

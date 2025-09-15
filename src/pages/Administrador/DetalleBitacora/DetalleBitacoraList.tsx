@@ -1,14 +1,15 @@
 // src/pages/Admin/Bitacora/BitacoraDetail.tsx
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchBitacora, fetchDetalleBitacoras } from '../../../api/api'
-import type { Bitacora, DetalleBitacora } from '../../../types'
+import { fetchBitacora, fetchDetalleBitacoras, fetchUsuarios } from '../../../api/api'
+import type { Bitacora, DetalleBitacora, CustomUser } from '../../../types'
 
 const BitacoraDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [bitacora, setBitacora] = useState<Bitacora | null>(null)//sesta son la sbitacoracs
-  const [detalles, setDetalles] = useState<DetalleBitacora[]>([])//esto son s etalled labcor
+  const [bitacora, setBitacora] = useState<Bitacora | null>(null)
+  const [detalles, setDetalles] = useState<DetalleBitacora[]>([])
+  const [usuario, setUsuario] = useState<CustomUser | null>(null); // New state for the user object
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -18,10 +19,14 @@ const BitacoraDetail: React.FC = () => {
         if (id) {
           const b = await fetchBitacora(+id)
           const det = await fetchDetalleBitacoras()
-          // Filtrar solo los detalles de esta bitácora:
-         
+          const users = await fetchUsuarios(); // Fetch all users
+
           setBitacora(b)
           setDetalles(det.filter(detalle => detalle.bitacora === +id))
+
+          // Find the user associated with this bitacora
+          const foundUser = users.find((u) => u.id === b.usuario);
+          setUsuario(foundUser || null); // Set the found user or null
         }
       } catch (err) {
         console.error(err)
@@ -44,7 +49,7 @@ const BitacoraDetail: React.FC = () => {
         ← Volver
       </button>
       <h2 className="text-2xl font-semibold mb-2">
-        Detalle de sesión de {bitacora.usuario}
+        Detalle de sesión de {usuario?.username || 'Usuario desconocido'}
       </h2>
       <p>Login: {new Date(bitacora.login).toLocaleString()}</p>
       <p>Logout: {bitacora.logout ? new Date(bitacora.logout).toLocaleString() : '—'}</p>
@@ -79,4 +84,4 @@ const BitacoraDetail: React.FC = () => {
   )
 }
 
-export default BitacoraDetail
+export default BitacoraDetail;

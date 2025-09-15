@@ -1,61 +1,109 @@
-
+// src/components/Sidebar.tsx
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { menuItemsByRole } from '../../config/menuConfig';
+import { menuItemsByRole  } from '../../config/menuConfig';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars, faTimes, faUser, faSignOutAlt, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import DropdownMenu from '../DropdownMenu'; // Import the new component
 
 const Sidebar: React.FC = () => {
   const { user, signout } = useAuth();
   const role = user?.rol?.nombre;
-  const back = useNavigate();
+  const navigate = useNavigate();
 
   const menuItems = role && menuItemsByRole[role as keyof typeof menuItemsByRole] || [];
 
-  const [isOpen, setIsOpen] = useState(true); // Estado de visibilidad
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSignout = () => {
+    signout();
+    navigate('/login');
+  };
+
+  const handleItemClick = () => {
+    setIsOpen(false);
+  };
+
+  const menuIcon = isOpen ? faTimes : faBars;
 
   return (
     <>
-      {/* Botón para abrir/cerrar el sidebar */}
+      {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 bg-red-600 text-white p-2 rounded hover:bg-red-700"
+        className="fixed top-4 left-4 z-50 p-2 text-gray-800 transition-colors duration-300 md:hidden focus:outline-none"
       >
-        {isOpen ? '✖' : '☰'} {/* Iconos de cerrar y hamburguesa */}
+        <FontAwesomeIcon icon={menuIcon} size="lg" />
       </button>
+
+      {/* Sidebar Overlay for Mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/25 md:hidden"
+          onClick={() => setIsOpen(false)}
+        ></div>
+      )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 bg-red-800 text-white w-64 h-screen flex flex-col transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 h-full flex flex-col transition-transform duration-300 ease-in-out bg-white shadow-xl
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative md:w-64`}
       >
-        <div className="p-4 text-xl font-bold">Home</div>
+        <div className="flex items-center justify-between p-6">
+          <h1 className="text-xl font-extrabold text-gray-800">Smart Condominium</h1>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-2 text-gray-600 transition-colors duration-300 rounded-full hover:bg-gray-100 md:hidden focus:outline-none"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
         <nav className="flex-1 overflow-y-auto">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `block px-4 py-2 hover:bg-gray-700 ${isActive ? 'bg-gray-700' : ''}`
-              }
-              onClick={() => setIsOpen(false)} // Se cierra al dar click en un link
-            >
-             
-            </NavLink>
-          ))}
+          <ul>
+            {menuItems.map((item) => (
+              <li key={item.title} className="py-1">
+                {item.subItems ? (
+                  <DropdownMenu item={item} onItemClick={handleItemClick} />
+                ) : (
+                  <NavLink
+                    to={item.to || '#'}
+                    className={({ isActive }) =>
+                      `flex items-center px-6 py-3 text-sm font-medium transition-colors duration-300 ease-in-out rounded-lg mx-2
+                      ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`
+                    }
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <FontAwesomeIcon icon={item.icon || faQuestionCircle} className="mr-3" />
+                    {item.title}
+                  </NavLink>
+                )}
+              </li>
+            ))}
+            <li className="py-1">
+              <NavLink
+                to="/perfil"
+                className={({ isActive }) =>
+                  `flex items-center px-6 py-3 text-sm font-medium transition-colors duration-300 ease-in-out rounded-lg mx-2
+                  ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`
+                }
+                onClick={() => setIsOpen(false)}
+              >
+                <FontAwesomeIcon icon={faUser} className="mr-3" />
+                Perfil
+              </NavLink>
+            </li>
+          </ul>
         </nav>
-        <NavLink
-          to={'/perfil'}  className="block px-4 py-2 hover:bg-gray-700">
-          Perfil
-        </NavLink>
-        <button
-          onClick={() => {
-            signout();
-            back('/login');
-          }}
-          className="m-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
-        >
-          Cerrar sesión
-        </button>
+        <div className="p-4">
+          <button
+            onClick={handleSignout}
+            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white transition-colors duration-300 ease-in-out bg-gray-800 rounded-md shadow-md hover:bg-gray-700"
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
+            Cerrar sesión
+          </button>
+        </div>
       </div>
     </>
   );

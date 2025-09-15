@@ -1,1 +1,525 @@
-postgresql://si2_p1_user:JUXyxQtkkKlg7dPR0mSd7G6Aey0OT4r0@dpg-d2t0t2euk2gs73cd9ajg-a.oregon-postgres.render.com/si2_p1
+intrucciones leer los archivsos que acabo de proporcionarte  en este promp 
+1. objetivo implementar todo los objeto que heredan de usuario ,pero primero empezemos con implementar el formulario usuario y dependiendo del rol seleccionado  mostrar los campos de las demas tablas 
+por  ahora empezemos con inquilino   si el rol selecionado es
+ inquilino entonces mostrar 
+  fecha_inicio_contrato = models.DateField(blank=True, null=True)
+    fecha_fin_contrato = models.DateField(blank=True, null=True)
+
+2.todo los roles se obtienen del enpoinnt
+
+[
+    {
+        "id": 1,
+        "nombre": "Administrador"
+    },
+    {
+        "id": 2,
+        "nombre": "Inquilino"
+    }
+]
+3.usar validaciones de frontend me refiero a que debe cumpplir todo los requuisito por campo para llegar al agbackend 
+4 usar 
+// src/api/error.ts
+import type { AxiosError } from 'axios'
+
+type UiError = {
+  message: string      // texto para mostrar al usuario
+  fields?: Record<string, string[]> // errores por campo (validación)
+  status?: number      // código HTTP si existe
+}
+
+
+export function toUiError(err: unknown): UiError {
+  const ax = err as AxiosError<any>
+  if (ax?.response) {
+    const { status, data } = ax.response
+    if (data?.error) {
+      return {
+        message: data.error.message || 'Ocurrió un error',
+        fields: data.error.fields,
+        status
+      }
+    }
+    if (data?.detail) return { message: data.detail, status }
+    return { message: 'Error de validación', fields: data, status }
+  }
+  if (ax?.request) return { message: 'No hay conexión con el servidor' }
+  return { message: (ax as any)?.message || 'Error desconocido' }
+} 
+
+
+// src/pages/Admin/Users/CustomUserForm.tsx
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { fetchRoles } from '../../../api/rol'
+import { fetchUsuario, createUsuario, updateUsuario }
+  from '../../../types/user'
+
+import type { CustomUserResponse }
+  from '../../../types/user'
+
+import { toUiError } from '../../../api/error'
+import type { Rol } from '../../../types/index'
+
+//son los datos del fourmulrio
+import PasswordInput from './PasswordInput'
+interface UserFormState {
+  username: string;
+  password: string;
+  confirm: string  ;
+  rol: number | null;
+}
+
+const CustomUserForm: React.FC = () => {
+  const { id } = useParams<{ id: string }>()
+  const isEdit = Boolean(id)
+  const navigate = useNavigate()
+
+
+  const [form, setForm] = useState<UserFormState>({ username: '', password: '', rol: null ,confirm:''})
+  const [roles, setRoles] = useState<Rol[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
+  const [topError, setTopError] = useState<string>('')
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({})
+  useEffect(() => {
+    // cargar lista de roles para el select
+    fetchRoles()
+      .then(setRoles)
+      .catch(console.error)
+  }, [])
+
+  useEffect(() => {
+    if (isEdit && id) {
+      setLoading(true)
+      fetchUsuario(+id)
+        .then((u: CustomUserResponse) => {
+          setForm({
+            username: u.username,
+            password: '',confirm:'',
+            rol: u.rol?.id ?? null,
+          })
+        })
+        .catch((err) => {
+          const { message, fields } = toUiError(err)
+          setTopError(message)
+          if (fields) setFormErrors(fields)
+        })
+        .finally(() => setLoading(false))
+    }
+  }, [id, isEdit])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setForm(prev => ({
+      ...prev,
+      [name]: name === 'rol' ? (value ? Number(value) : null) : value
+    }))
+  }
+
+  // 1) catch del submit: setTopError / setFormErrors
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setTopError('')
+    setFormErrors({})
+     // ✅ Bloquear envío si no coincide/valida
+    const pwdErr = validatePasswords()
+    if (pwdErr) {
+      setTopError(pwdErr.message)
+      return
+    }
+    try {
+      if (isEdit && id) {
+        // 2) construir payload sin campos extra ni password vacía
+        const payload: {
+          username: string;
+          rol: number | null;
+          password?: string
+        } = {
+          username: form.username,
+          rol: form.rol
+        }
+        if (form.password && form.password.trim().length > 0) {
+          payload.password = form.password
+        }
+        await updateUsuario(+id, payload)
+      } else {
+        const payload = {
+          username: form.username,
+          password: form.password,
+          rol: form.rol
+        }
+        await createUsuario(payload)
+      }
+      navigate('/administrador/usuarios')
+    } catch (err) {
+      const { message, fields } = toUiError(err)
+      setTopError(message)
+      if (fields) setFormErrors(fields)   // <- ahora sí se ven en el form
+    }
+  } 
+   const validatePasswords = () => {
+    // Crear
+    if (!isEdit) {
+      if (!form.password || form.password.trim().length < 6) {
+        return { message: 'La contraseña debe tener al menos 6 caracteres.', fields: { password: ['Mínimo 6 caracteres.'] } }
+      }
+      if (form.password !== form.confirm) {
+        return { message: 'Las contraseñas no coinciden.', fields: { password: ['No coincide con la confirmación.'], confirm: ['No coincide con la contraseña.'] } }
+      }
+      return null
+    }
+
+    // Editar: solo validar si quiere cambiar la contraseña
+    if (form.password && form.password.trim().length > 0) {
+      if (form.password.trim().length < 6) {
+        return { message: 'La contraseña debe tener al menos 6 caracteres.', fields: { password: ['Mínimo 6 caracteres.'] } }
+      }
+      if (form.password !== form.confirm) {
+        return { message: 'Las contraseñas no coinciden.', fields: { password: ['No coincide con la confirmación.'], confirm: ['No coincide con la contraseña.'] } }
+      }
+    }
+    return null
+  }
+ 
+  return (
+    <div >
+      <h2 className="text-2xl font-semibold mb-4">
+        {isEdit ? 'EditarUsuario' : 'Crear Usuario'}
+      </h2>
+      {topError && (
+        <div className="mb-4 rounded border border-red-300 bg-red-50 p-3 text-red-700">
+          {topError}
+        </div>
+      )}
+
+
+
+      {loading ? (
+        <p>Cargando datos…</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+          <div>
+            <label className="block mb-1">Username</label>
+            <input
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              required
+              className="w-full border px-2 py-1 rounded"
+            />
+            {formErrors.username?.map((m, i) => (
+              <p key={i} className="text-xs text-red-600 mt-1">{m}</p>
+            ))}
+          </div>
+
+          <div>
+            <label className="block mb-1">Password{isEdit ? ' (dejar en blanco para no cambiar)' : ''}</label>
+            <PasswordInput
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              required={!isEdit}
+              placeholder="Ingrese su contraseña"
+            />
+            {formErrors.password?.map((m, i) => (
+              <p key={i} className="text-xs text-red-600 mt-1">{m}</p>
+            ))}
+          </div>
+          <div>
+            <label className="block mb-1">
+              Confirmar contraseña{isEdit ? ' (requerido solo si cambia contraseña)' : ''}
+            </label>
+            <PasswordInput
+              name="confirm"              // 👈 campo confirmación
+              value={form.confirm}
+              onChange={handleChange}
+              required={!isEdit}
+              placeholder="Repita la contraseña"
+            />
+          </div>
+
+
+          <div>
+            <label className="block mb-1">Rol</label>
+            <select
+              name="rol"
+              value={form.rol ?? ''}
+              onChange={handleChange}
+              className="w-full border px-2 py-1 rounded"
+            >
+              <option value="">-- Seleccione un rol --</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>{r.nombre}</option>
+              ))}
+            </select>
+            {formErrors.rol?.map((m, i) => (
+              <p key={i} className="text-xs text-red-600 mt-1">{m}</p>
+            ))}
+          </div>
+
+          <div className="flex space-x-2">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/administrador/usuarios')}
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
+export default CustomUserForm
+
+
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Expedientes - Vista Jerárquica{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-folder-tree"></i> Expedientes - Vista Jerárquica</h2>
+                <div class="text-muted">
+                    <small>{{ total_clientes }} cliente{{ total_clientes|pluralize:"s" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estructura jerárquica -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if clientes_con_casos %}
+                        <div class="hierarchy-container">
+                            {% for item_cliente in clientes_con_casos %}
+                                <!-- NIVEL 1: CLIENTE -->
+                                <div class="hierarchy-level-1 mb-3">
+                                    <div class="d-flex align-items-center p-3 bg-primary text-white rounded-top">
+                                        <button class="btn btn-sm btn-outline-light me-2" 
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#cliente-{{ item_cliente.cliente.id }}"
+                                                aria-expanded="true">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <i class="fas fa-user me-2"></i>
+                                        <strong>{{ item_cliente.cliente.user.nombre_completo }}</strong>
+                                        <span class="badge bg-light text-primary ms-2">
+                                            {{ item_cliente.total_casos }} caso{{ item_cliente.total_casos|pluralize:"s" }}
+                                        </span>
+                                    </div>
+
+                                    <div class="collapse show" id="cliente-{{ item_cliente.cliente.id }}">
+                                        <div class="border border-top-0 rounded-bottom">
+                                            {% for item_caso in item_cliente.casos %}
+                                                <!-- NIVEL 2: CASO -->
+                                                <div class="hierarchy-level-2 border-bottom">
+                                                    <div class="d-flex align-items-center p-3 bg-light">
+                                                        <button class="btn btn-sm btn-outline-secondary me-2" 
+                                                                type="button" 
+                                                                data-bs-toggle="collapse" 
+                                                                data-bs-target="#caso-{{ item_caso.caso.id }}"
+                                                                aria-expanded="false">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </button>
+                                                        <i class="fas fa-briefcase me-2 text-secondary"></i>
+                                                        <div class="flex-grow-1">
+                                                            <strong>{{ item_caso.caso.nro_caso }}</strong>
+                                                            {% if item_caso.caso.tipo_de_caso %}
+                                                                <span class="text-muted"> - {{ item_caso.caso.tipo_de_caso }}</span>
+                                                            {% endif %}
+                                                            <div class="small text-muted">
+                                                                Estado: 
+                                                                <span class="badge 
+                                                                    {% if item_caso.caso.estado == 'ABIERTO' %}bg-success
+                                                                    {% elif item_caso.caso.estado == 'EN_PROCESO' %}bg-warning
+                                                                    {% elif item_caso.caso.estado == 'CERRADO' %}bg-info
+                                                                    {% else %}bg-secondary{% endif %}">
+                                                                    {{ item_caso.caso.get_estado_display }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span class="badge bg-secondary">
+                                                            {{ item_caso.total_expedientes }} expediente{{ item_caso.total_expedientes|pluralize:"s" }}
+                                                        </span>
+                                                        <span class="badge bg-info ms-1">
+                                                            {{ item_caso.total_documentos }} doc{{ item_caso.total_documentos|pluralize:"s" }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="collapse" id="caso-{{ item_caso.caso.id }}">
+                                                        <div class="p-2">
+                                                            {% for item_expediente in item_caso.expedientes %}
+                                                                <!-- NIVEL 3: EXPEDIENTE -->
+                                                                <div class="hierarchy-level-3 mb-2">
+                                                                    <div class="d-flex align-items-center p-2 bg-white border rounded">
+                                                                        <button class="btn btn-sm btn-outline-info me-2" 
+                                                                                type="button" 
+                                                                                data-bs-toggle="collapse" 
+                                                                                data-bs-target="#expediente-{{ item_expediente.expediente.id }}"
+                                                                                aria-expanded="false">
+                                                                            <i class="fas fa-chevron-right"></i>
+                                                                        </button>
+                                                                        <i class="fas fa-folder me-2 text-info"></i>
+                                                                        <div class="flex-grow-1">
+                                                                            <strong>{{ item_expediente.expediente.codigo }}</strong>
+                                                                            {% if item_expediente.expediente.autoridad %}
+                                                                                <div class="small text-muted">{{ item_expediente.expediente.autoridad }}</div>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        <span class="badge bg-info">
+                                                                            {{ item_expediente.total_documentos }} documento{{ item_expediente.total_documentos|pluralize:"s" }}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div class="collapse" id="expediente-{{ item_expediente.expediente.id }}">
+                                                                        <div class="ps-5 pe-2 pb-2">
+                                                                            {% if item_expediente.documentos %}
+                                                                                <div class="list-group">
+                                                                                    {% for documento in item_expediente.documentos %}
+                                                                                        <!-- NIVEL 4: DOCUMENTO -->
+                                                                                        <div class="list-group-item d-flex align-items-center py-2">
+                                                                                            <i class="fas fa-file-alt me-2 text-muted"></i>
+                                                                                            <div class="flex-grow-1">
+                                                                                                <strong>{{ documento.nombre }}</strong>
+                                                                                                <div class="small text-muted">
+                                                                                                    {{ documento.tipo.nombre }} • 
+                                                                                                    {{ documento.fecha_subida|date:"d/m/Y H:i" }} • 
+                                                                                                    {{ documento.creado_por.nombre_completo }}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div class="btn-group btn-group-sm">
+                                                                                                <a href="{{ documento.archivo.url }}" 
+                                                                                                   class="btn btn-outline-primary btn-sm" 
+                                                                                                   target="_blank" 
+                                                                                                   title="Ver documento">
+                                                                                                    <i class="fas fa-eye"></i>
+                                                                                                </a>
+                                                                                                <a href="{{ documento.archivo.url }}" 
+                                                                                                   class="btn btn-outline-success btn-sm" 
+                                                                                                   download
+                                                                                                   title="Descargar">
+                                                                                                    <i class="fas fa-download"></i>
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    {% endfor %}
+                                                                                </div>
+                                                                            {% else %}
+                                                                                <div class="text-muted text-center py-3">
+                                                                                    <i class="fas fa-folder-open fa-2x mb-2"></i>
+                                                                                    <div>No hay documentos en este expediente</div>
+                                                                                </div>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No hay expedientes disponibles</h4>
+                            <p class="text-muted">No se encontraron clientes con casos asignados.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hierarchy-container {
+    font-size: 0.95rem;
+}
+
+.hierarchy-level-1 {
+    border-left: 4px solid #0d6efd;
+}
+
+.hierarchy-level-2 {
+    margin-left: 20px;
+    border-left: 3px solid #6c757d;
+}
+
+.hierarchy-level-3 {
+    margin-left: 40px;
+    border-left: 2px solid #17a2b8;
+}
+
+.btn-group-sm .btn {
+    font-size: 0.75rem;
+}
+
+.collapse .btn i {
+    transition: transform 0.2s;
+}
+
+.collapse.show + * .btn i,
+.btn[aria-expanded="true"] i {
+    transform: rotate(90deg);
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.list-group-item {
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem !important;
+    margin-bottom: 2px;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+
+<script>
+// Script para cambiar iconos de chevron cuando se expanden/colapsan
+document.addEventListener('DOMContentLoaded', function() {
+    const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    
+    collapseElements.forEach(function(element) {
+        element.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            const target = document.querySelector(this.getAttribute('data-bs-target'));
+            
+            setTimeout(() => {
+                if (target.classList.contains('show')) {
+                    icon.className = 'fas fa-chevron-down';
+                } else {
+                    icon.className = 'fas fa-chevron-right';
+                }
+            }, 150);
+        });
+    });
+});
+</script>
+{% endblock %}

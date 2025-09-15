@@ -37,7 +37,7 @@ npm install --save-dev @types/jwt-decode
 # Instala un library de Dual‑Listbox
 npm install react-dual-listbox
 
-
+npm install formik yup
 
 
 npm run dev

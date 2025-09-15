@@ -1,4 +1,6 @@
 // src/pages/Admin/Users/CustomUserList.tsx
+
+/**
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchUsuarios, deleteUsuario } from '../../../api/api'
@@ -92,3 +94,4 @@ const CustomUserList: React.FC = () => {
 }
 
 export default CustomUserList
+*/

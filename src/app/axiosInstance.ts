@@ -5,8 +5,8 @@ import { toast } from 'react-toastify'
 import { toUiError } from '../api/error'
 import { navigateTo } from './navigator'
 
-const baseURL = import.meta.env.VITE_API_aURL || 'http://127.0.0.1:8000/api'
-
+const baseURL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+console.log('base url is',baseURL)
 const api = axios.create({ baseURL })
 
 // —— Request: adjuntar access token ——a

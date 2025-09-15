@@ -1,8 +1,9 @@
 
 // src/pages/Admin/Users/CustomUserForm.tsx
+/**
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { fetchRoles } from '../../../api/api'
+import { fetchRoles } from '../../../api/rol'
 import { fetchUsuario, createUsuario, updateUsuario }
   from '../../../types/user'
 
@@ -13,7 +14,7 @@ import { toUiError } from '../../../api/error'
 import type { Rol } from '../../../types/index'
 
 //son los datos del fourmulrio
-import PasswordInput from './PasswordInput'
+import PasswordInput from '../Usuarios/PasswordInput'
 interface UserFormState {
   username: string;
   password: string;
@@ -231,3 +232,4 @@ const CustomUserForm: React.FC = () => {
 }
 
 export default CustomUserForm
+ */

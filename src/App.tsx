@@ -9,11 +9,13 @@ import { useAuth } from './contexts/AuthContext';
 import AdministradorRoutes from './routes/AdministradorRoutes';
 import ClienteRoutes from './routes/ClienteRoutes';
 import PersonalRoutes from './routes/PersonalRoutes';
+import InquilinoRoutes from './routes/InquilinoRoutes';
 
 import Sidebar from './components/Layout/Sidebar';
 import Welcome from './pages/welcom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import UnauthorizedAccess from './pages/UnauthorizedAccess';
 
 // Layout protegido con Sidebar único
 const LayoutWithSidebar = () => {
@@ -33,6 +35,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/unauthorized" element={<UnauthorizedAccess />} />
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
 
@@ -62,13 +65,21 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/inquilino/*"
+            element={
+              <ProtectedRoute requiredRoles={['Inquilino']}>
+                <InquilinoRoutes />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* errores */}
+        
         <Route path="/forbidden" element={<Forbidden />} />
         <Route
           path='/perfil' element={<Perfil />} />
-
         <Route path="*" element={<NotFound />} />
       </Routes>
 

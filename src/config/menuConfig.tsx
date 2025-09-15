@@ -1,51 +1,48 @@
 // src/config/menuItems.ts
-import { FaShoppingCart } from 'react-icons/fa'
+import type { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faHome, faUsers, faCogs, faBoxOpen,faPhone,
+   faShoppingCart, faUserShield, faBuilding, faPaw, faCar } from '@fortawesome/free-solid-svg-icons';
 
 export interface MenuItem {
-  to: string
-  label: string
-  icon?: React.ReactNode
+  to?: string; // Make 'to' optional for parent items
+  title: string;
+  icon?: IconProp;
+  subItems?: MenuItem[]; // New property for dropdown items
 }
+
 export const menuItemsByRole: Record<string, MenuItem[]> = {
- 
   Administrador: [
-    { to: '/administrador/dashboard', label: 'DASHBOARD' },
-    { to: '/administrador/usuarios', label: 'USUARIOS' },
-    { to: '/administrador/roles', label: 'Roles' },
-    { to: '/administrador/bitacoras', label: 'Bitácoras' },
-    { to: '/administrador/productos', label: 'productos' },
-    { to: '/administrador/inventarios', label: 'Inventarios' },
-
-    //{ to: '/administrador/ventas', label: 'Préstamos' },
-    //{ to: '/administrador/detalle-ventas', label: 'Detalle de Ventas' },
-    //{ to: '/administrador/bitacora-detalles', label: 'Bitácora Detallada' },
-
-    //{ to: '/administrador/pedidos', label: 'Pedidos' },
-    //{ to: '/administrador/detalle-pedidos', label: 'Detalle de Pedidos' },
-    //{ to: '/administrador/facturas', label: 'Facturas' },
-    //{ to: '/administrador/reportes', label: 'Reportes' },
-    //{ to: '/administrador/detalle-bitacoras', label: 'Detalle de Bitácoras' },
+    { to: '/administrador/dashboard', title: 'DASHBOARD', icon: faHome },
+    {
+      title: 'Módulo Usuarios',
+      icon: faUsers,
+      subItems: [
+        { to: '/administrador/usuarios', title: 'Usuarios', icon: faUsers },
+        { to: '/administrador/roles', title: 'Roles', icon: faCogs },
+        { to: '/administrador/grupos', title: 'Permisos', icon: faUserShield },
+        { to: '/administrador/bitacoras', title: 'Bitacoras', icon: faBoxOpen  },
+        { to: '/administrador/telefonos', title: 'Telefonos', icon: faPhone  },
+      ],
+    },
+    {
+      title: 'Módulo Casas',
+      icon: faBuilding,
+      subItems: [
+        { to: '/administrador/mascotas', title: 'Mascotas', icon: faPaw },
+        { to: '/administrador/casas', title: 'Casas', icon: faHome },
+        { to: '/administrador/vehiculos', title: 'Vehículos', icon: faCar },
+      ],
+    },
+   
   ],
-
   Cliente: [
-    { to: '/cliente/dashboard', label: 'Dashboard' },
-    { to: '/cliente/productos', label: 'Catálogo' },
-     {
+    { to: '/cliente/dashboard', title: 'Dashboard', icon: faHome },
+    { to: '/cliente/productos', title: 'Catálogo', icon: faBoxOpen },
+    {
       to: '/cliente/cart',
-      label: 'Carrito',
-      icon: <FaShoppingCart className="inline mr-2" />
+      title: 'Carrito',
+      icon: faShoppingCart,
     },
   ],
-
-  Cajero: [
-    { to: '/cajero/dashboard', label: 'Dashboard' },
-    { to: '/cajero/books', label: 'Libros' },
-    { to: '/cajero/my-loans', label: 'Mis Préstamos' },
-  ],
-
-  Repartidor: [
-    { to: '/repartidor/dashboard', label: 'Dashboard' },
-    { to: '/repartidor/books', label: 'Libros' },
-    { to: '/repartidor/my-loans', label: 'Mis Préstamos' },
-  ],
+  // ... (other roles)
 };

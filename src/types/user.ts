@@ -1,39 +1,58 @@
-import type {Rol} from './index'
-import axios  from '../app/axiosInstance';
-export interface CustomUserResponse{
-    id:number;
-    username:string;
-    rol:Rol;
-}
-export type CreateUserDto = {
-  username: string
-  password: string
-  rol: number | null
+// src/types/user.ts
+
+import type { Rol } from './index';
+
+export interface CustomUserResponse {
+  id: number;
+  username: string;
+  email: string | null;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  sexo: 'M' | 'F' | null;
+  direccion: string | null;
+  fecha_nacimiento: string | null;
+  rol: Rol; 
+  fecha_inicio_contrato?: string | null;
+  fecha_fin_contrato?: string | null;
+  fecha_adquisicion?: string | null;
+  tipo_personal?: string | null;
+  fecha_ingreso?: string | null;
+  salario?: string | null;
+  // 👇 NUEVOS CAMPOS PARA ADMINISTRADOR
+  fecha_certificacion?: string | null;
+  empresa?: string | null;
+  numero_licencia?: string | null;
+
 }
 
-export type UpdateUserDto = {
-  username?: string
-  password?: string
-  rol?: number | null
+export interface CreateUserPayload {
+  username: string;
+  password: string;
+  email?: string | null;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  sexo?: 'M' | 'F' | null;
+  direccion?: string | null;
+  fecha_nacimiento?: string | null;
+  //rol: number; // Sigue siendo ID (para enviar al backend)
+  rol_nombre: string;
+  // Campos dinámicos
+  fecha_inicio_contrato?: string | null;
+  fecha_fin_contrato?: string | null;
+  fecha_adquisicion?: string | null;
+  tipo_personal?: string | null;
+  fecha_ingreso?: string | null;
+  salario?: string | null;
+  // 👇 NUEVOS CAMPOS PARA ADMINISTRADOR
+  fecha_certificacion?: string | null;
+  empresa?: string | null;
+  numero_licencia?: string | null;
+
 }
 
-export const fetchUsuarios=async():Promise<CustomUserResponse>=>{ 
-    const {data}=await axios.get<CustomUserResponse>('/usuarios/');
-    return data;
-}
-export const updateUsuario=async(id:number ,u:UpdateUserDto):Promise<CustomUserResponse>=>{ 
-  const {data}=await axios.put<CustomUserResponse>(`/usuarios/${id}/`,u);
-    return data;
-}
-
-export const partialUpdateUsuario=async(id:number,u: Partial<UpdateUserDto>):Promise<CustomUserResponse>=>{ 
-const {data}=await axios.patch<CustomUserResponse>(`/usuarios/${id}/`,u);
-return data;}
-
-export function createUsuario(dto: CreateUserDto) {
-  return axios.post('/usuarios/', dto)
-}                                                
-export const  fetchUsuario=async (id:number):Promise<CustomUserResponse>=>{
-const {data}= await axios.get<CustomUserResponse>(`/usuarios/${id}/`)
- return data;
+export interface UserFormState extends Omit<CreateUserPayload, 'password' | 'rol'> {
+  confirm: string;
+  rol: number | null;
 }
