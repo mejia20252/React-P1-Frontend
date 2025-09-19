@@ -1,7 +1,7 @@
 /** 3. ROL */
 import type {
   Rol
-} from '../types'
+} from '../types/type-rol'
 
 import axios from '../app/axiosInstance'
 

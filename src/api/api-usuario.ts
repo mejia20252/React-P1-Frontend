@@ -1,4 +1,5 @@
 import type { Usuario } from '../types/type-usuario';
+import type { PropietarioUsuario } from '../types/type-propietario';
 import axiosInstance from '../app/axiosInstance';
 
 // DTO para creación/actualización (si necesitas enviar datos)
@@ -64,4 +65,9 @@ export const partialUpdateUsuario = async (
  */
 export const deleteUsuario = async (id: number): Promise<void> => {
   await axiosInstance.delete(`/usuarios/${id}/`);
+};
+
+export const getPropietarios = async (): Promise<PropietarioUsuario[]> => {
+  const { data } = await axiosInstance.get<PropietarioUsuario[]>('/usuarios/propietarios/');
+  return data;
 };

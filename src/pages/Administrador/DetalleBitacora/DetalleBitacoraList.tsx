@@ -1,8 +1,12 @@
 // src/pages/Admin/Bitacora/BitacoraDetail.tsx
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchBitacora, fetchDetalleBitacoras, fetchUsuarios } from '../../../api/api'
-import type { Bitacora, DetalleBitacora, CustomUser } from '../../../types'
+import {  fetchUsuarios } from '../../../api/api'
+import { fetchBitacora,   } from '../../../api/api-bitacora'
+import {  fetchDetalleBitacoras,  } from '../../../api/api-detalle-bitacora'
+import type { Bitacora} from '../../../types/type-bitacora'
+import type {  DetalleBitacora } from '../../../types/type-detalle-bitacora'
+import type {  CustomUser } from '../../../types/type-customuser'
 
 const BitacoraDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()

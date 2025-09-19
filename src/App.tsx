@@ -7,9 +7,6 @@ import Forbidden from './pages/Forbidden';
 import Perfil from './pages/Perfil';
 import { useAuth } from './contexts/AuthContext';
 import AdministradorRoutes from './routes/AdministradorRoutes';
-import ClienteRoutes from './routes/ClienteRoutes';
-import PersonalRoutes from './routes/PersonalRoutes';
-import InquilinoRoutes from './routes/InquilinoRoutes';
 
 import Sidebar from './components/Layout/Sidebar';
 import Welcome from './pages/welcom';
@@ -48,31 +45,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/personal/*"
-            element={
-              <ProtectedRoute requiredRoles={['Personal']}>
-                <PersonalRoutes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cliente/*"
-            element={
-              <ProtectedRoute requiredRoles={['Cliente']}>
-                <ClienteRoutes />
-
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/inquilino/*"
-            element={
-              <ProtectedRoute requiredRoles={['Inquilino']}>
-                <InquilinoRoutes />
-              </ProtectedRoute>
-            }
-          />
+        
         </Route>
 
         {/* errores */}

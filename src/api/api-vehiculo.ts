@@ -1,7 +1,6 @@
 import axiosInstance from '../app/axiosInstance';
 import type { VehiculoFormData } from '../schemas/schema-vehiculo';
 import type { Vehiculo } from '../types/type-vehiculo';
-
 export const vehiculoApi = {
   getAll: async (): Promise<Vehiculo[]> => {
     const { data } = await axiosInstance.get<Vehiculo[]>('/vehiculos/');
@@ -26,4 +25,5 @@ export const vehiculoApi = {
   delete: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/vehiculos/${id}/`);
   },
+ 
 };

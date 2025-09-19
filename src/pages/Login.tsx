@@ -12,25 +12,29 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [topError, setTopError] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTopError('');
     setFormErrors({});
 
+    if (isLoading) return; // Prevenir múltiples envíos
+
+    setIsLoading(true);
+
     try {
       if (user) await signout();
 
       const me = await signin(username, password);
-      // Verificar si rol es null o undefined
-      console.log('este es e usuar', me);
+      console.log('este es el usuario', me);
 
       if (!me.rol) {
-      console.log('si entreaaqu');
-
+        console.log('si entra aqui');
         navigate('/unauthorized', { replace: true });
-        return; // Salir de la función para evitar continuar
+        return;
       }
+
       switch (me.rol?.nombre) {
         case 'Administrador':
           navigate('/administrador', { replace: true });
@@ -39,8 +43,6 @@ const Login: React.FC = () => {
           navigate('/personal', { replace: true });
           break;
         case 'Cliente':
-          navigate('/cliente', { replace: true });
-          break;
         case 'Inquilino':
           navigate('/cliente', { replace: true });
           break;
@@ -51,6 +53,8 @@ const Login: React.FC = () => {
       const { message, fields } = toUiError(err);
       setTopError(message);
       if (fields) setFormErrors(fields);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,6 +81,7 @@ const Login: React.FC = () => {
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150"
               placeholder="Ingresa tu usuario"
+              disabled={isLoading}
             />
             {formErrors.username?.map((m, i) => (
               <p key={i} className="text-red-600 text-xs mt-1">
@@ -95,6 +100,7 @@ const Login: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150"
               placeholder="Ingresa tu contraseña"
+              disabled={isLoading}
             />
             {formErrors.password?.map((m, i) => (
               <p key={i} className="text-red-600 text-xs mt-1">
@@ -105,9 +111,40 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-md hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            disabled={isLoading}
+            className={`w-full font-bold py-2.5 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              isLoading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
+            }`}
           >
-            Entrar
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Iniciando sesión...
+              </span>
+            ) : (
+              'Entrar'
+            )}
           </button>
         </form>
       </div>

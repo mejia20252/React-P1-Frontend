@@ -15,7 +15,7 @@ const commonFields = {
 };
 
 // === Lista de roles válidos (para validación dinámica) ===
-const VALID_ROLES = ["Administrador", "Inquilino", "Propietario", "Personal"] as const;
+const VALID_ROLES = ["Administrador", "Inquilino", "Propietario", "Personal", "Ninguno"] as const;
 export type ValidRolName = typeof VALID_ROLES[number]; // "Administrador" | "Inquilino" | ...
 
 // === Schema principal ===

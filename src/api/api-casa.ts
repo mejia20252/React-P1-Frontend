@@ -25,5 +25,21 @@ export const casaApi = {
   fetchCasa: async (id: number): Promise<Casa> => {
     const { data } = await axiosInstance.get<Casa>(`/casas/${id}/`);
     return data;
-  }
+  },
+   // 👇 NUEVOS MÉTODOS INDEPENDIENTES
+  asignarPropietario: async (casaId: number, usuarioId: number): Promise<Casa> => {
+    const { data } = await axiosInstance.post<Casa>(
+      `/casas/${casaId}/asignar-propietario/`,
+      { usuario_id: usuarioId }
+    );
+    return data;
+  },
+
+  desasignarPropietario: async (casaId: number): Promise<Casa> => {
+    const { data } = await axiosInstance.post<Casa>(
+      `/casas/${casaId}/desasignar-propietario/`,
+      {}
+    );
+    return data;
+  },
 };

@@ -1,32 +1,44 @@
-// src/pages/Administrador/Vehiculo/VehiculoList.tsx
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { vehiculoApi } from '../../../api/api-vehiculo';
+import { casaApi } from '../../../api/api-casa';
 import type { Vehiculo } from '../../../types/type-vehiculo';
+import type { Casa } from '../../../types/type-casa';
 import { useNavigate } from 'react-router-dom';
-import { getVehiculoTipoDisplay } from '../../../utils/vehiculo-utils'; // 👈 Helper para mostrar nombres amigables
+import { getVehiculoTipoDisplay } from '../../../utils/vehiculo-utils';
+import AsignarCasaModal from './AsignarCasaModal';
+import { vehiculoApiAgigment } from '../../../api/api-vehiculo-asingment';
 
 export default function VehiculoList() {
   const navigate = useNavigate();
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
+  const [casas, setCasas] = useState<Casa[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Estado para el modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [vehiculoIdToAssign, setVehiculoIdToAssign] = useState<number | null>(null);
+
   useEffect(() => {
-    const fetchVehiculos = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await vehiculoApi.getAll();
-        setVehiculos(data);
+        const [vehiculosData, casasData] = await Promise.all([
+          vehiculoApi.getAll(),
+          casaApi.getAll(),
+        ]);
+        setVehiculos(vehiculosData);
+        setCasas(casasData);
       } catch (err: any) {
-        setError('No se pudieron cargar los vehículos.');
+        setError('No se pudieron cargar los vehículos o casas.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVehiculos();
+    fetchData();
   }, []);
 
   const filteredVehiculos = vehiculos.filter(
@@ -37,6 +49,30 @@ export default function VehiculoList() {
           .toLowerCase()
           .includes(searchTerm.toLowerCase()))
   );
+
+  const handleAsignarCasa = async (vehiculoId: number) => {
+    setVehiculoIdToAssign(vehiculoId);
+    setIsModalOpen(true);
+  };
+
+  const handleDesasignarCasa = async (vehiculoId: number) => {
+    if (!window.confirm('¿Estás seguro de desasignar la casa de este vehículo?')) return;
+
+    try {
+      const updatedVehiculo = await vehiculoApiAgigment.desasignarCasa(vehiculoId);
+      setVehiculos(prev =>
+        prev.map((v) => (v.id === vehiculoId ? updatedVehiculo : v))
+      );
+    } catch (err: any) {
+      setError('No se pudo desasignar la casa.');
+    }
+  };
+
+  const handleAssignSuccess = (updatedVehiculo: Vehiculo) => {
+    setVehiculos(prev =>
+      prev.map((v) => (v.id === updatedVehiculo.id ? updatedVehiculo : v))
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,13 +145,22 @@ export default function VehiculoList() {
                     Editar
                   </button>
 
-                  {/* Asignar Casa */}
-                  <button
-                    onClick={() => navigate(`/administrador/vehiculos/${vehiculo.id}/asignar-casa`)}
-                    className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-                  >
-                    Asignar Casa
-                  </button>
+                  {/* Desasignar / Asignar */}
+                  {vehiculo.casa ? (
+                    <button
+                      onClick={() => handleDesasignarCasa(vehiculo.id)}
+                      className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    >
+                      Desasignar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAsignarCasa(vehiculo.id)}
+                      className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                    >
+                      Asignar Casa
+                    </button>
+                  )}
 
                   {/* Eliminar */}
                   <button
@@ -143,6 +188,15 @@ export default function VehiculoList() {
           </div>
         )}
       </div>
+
+      {/* Modal de asignación */}
+      {isModalOpen && vehiculoIdToAssign !== null && (
+        <AsignarCasaModal
+          vehiculoId={vehiculoIdToAssign}
+          onAssignSuccess={handleAssignSuccess}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

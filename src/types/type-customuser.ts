@@ -1,87 +1,23 @@
-export interface Group {
-  id: number;
-  name: string;
-  permissions: number[];
-}
-export  interface Inventario {
-  id: number;
-  producto: number;
-  precio: number;
-  stock: number;
-}
-export  interface Rol {
-  id: number;
-  nombre: string;
-}
+
+
 export  interface CustomUser {
   id: number;
   username: string;
   rol?: Rol | null;
 }
-export  interface Venta {
-  id: number;
-  total: number;
-  impuesto: number;
-  descuento: number;
-  subtotal: number;
-  cliente: CustomUser;
-  cajero: CustomUser;
-}
-export interface Telefono {
-    id: number;
-    numero: string;
-    tipo: string;
-    usuario: number; // L'ID dell'utente a cui appartiene il telefono
-}
+
+
 export interface Administrador {
   id: number;
   usuario: number; // La clave foránea al ID del usuario
 }
 export  type EstadoPedido = 'PENDIENTE' | 'EN_CAMINO' | 'ENTREGADO' | 'CANCELADO';
 
-export  interface Pedido {
-  id: number;
-  estado: EstadoPedido;
-  fecha: string; // ISO 8601 string
-  total: number;
-  direccion: string;
-  detallepedidos:DetallePedido;
-}
-export  interface DetallePedido {
-  id: number;
-  cantidad: number;
-  precio_unitario: number;
-  subtotal: number;
-}
-export  interface Factura {
-  id: number;
-  fecha: string;
-  total: number;
-  forma_pago: string;
-  pedido: Pedido;
-}
-export  interface Reporte {
-  id: number;
-  fecha_generada: string;
-  tipo: string;
-  parametro?: string;
-  cajero: CustomUser;
-}
-export  interface Bitacora {
-  id: number;
-  login: string;
-  logout?: string | null;
-  usuario: number;
-  ip?: string | null;
-  device?: string | null;
-}
-export  interface DetalleBitacora {
-  id: number;
-  bitacora: number;
-  accion: string;
-  fecha: string;
-  tabla: string;
-}
+
+
+
+
+
 export type CreateUserDto = {
   username: string
   password: string
@@ -93,12 +29,7 @@ export type UpdateUserDto = {
   password: string
   rol?: number | null
 }
-// src/types/index.ts
 
-// --- TIPOS BÁSICOS Y UTILITY TYPES ---
-/**
- * Un tipo de utilidad para definir los tipos de sexo.
- */
 export type Sexo = 'M' | 'F' | null;
 
 // --- INTERFACES PARA LOS MODELOS DEL BACKEND ---
@@ -190,7 +121,6 @@ export interface Usuario {
 }
 export interface Inquilino {
   id: number;
-  // El usuario está anidado directamente en el objeto Inquilino
   usuario: Usuario;
   fecha_inicio_contrato: string;
   fecha_fin_contrato: string;

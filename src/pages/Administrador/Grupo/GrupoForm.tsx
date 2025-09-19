@@ -4,8 +4,8 @@ import axiosInstance from '../../../app/axiosInstance';
 import { useForm } from 'react-hook-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { groupSchema, type GroupFormState } from '../../../schemas/schema-grupo'; // 👈 NUEVO
-import { toUiError } from '../../../api/error'; // 👈 YA LO TIENES
+import { groupSchema, type GroupFormState } from '../../../schemas/schema-grupo';
+import { toUiError } from '../../../api/error';
 
 type ApiGroup = { id: number | string; name: string; permissions: number[] };
 type ApiPermission = { id: number; name: string; codename: string; content_type: { app_label: string; model: string } };
@@ -34,7 +34,6 @@ const GrupoForm: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-
       try {
         const [groupData, permissionsData] = await Promise.all([
           isEdit && id
@@ -69,9 +68,8 @@ const GrupoForm: React.FC = () => {
 
   const onSubmit = async (values: GroupFormState) => {
     setTopError('');
-    setFormErrors({}); // Limpiar errores previos
+    setFormErrors({});
 
-    // ✅ VALIDACIÓN CON ZOD (frontend)
     const result = groupSchema.safeParse(values);
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
@@ -96,10 +94,8 @@ const GrupoForm: React.FC = () => {
       const uiError = toUiError(error);
 
       if (uiError.fields) {
-        // ✅ Error de validación de campo (ej: nombre duplicado)
         setFormErrors(uiError.fields);
       } else if (uiError.message) {
-        // ✅ Error general (ej: sin conexión)
         setTopError(uiError.message);
       } else {
         setTopError('Ocurrió un error inesperado al guardar el grupo.');
@@ -107,28 +103,28 @@ const GrupoForm: React.FC = () => {
     }
   };
 
- const handleMoveToChosen = (permId: number) => {
-  const newPermissions = [...new Set([...selectedPermissions, permId])];
-  setSelectedPermissions(newPermissions);
-  setValue('permissions', newPermissions); // 👈 ¡ACTUALIZA EL CAMPO DEL FORMULARIO!
-};
+  const handleMoveToChosen = (permId: number) => {
+    const newPermissions = [...new Set([...selectedPermissions, permId])];
+    setSelectedPermissions(newPermissions);
+    setValue('permissions', newPermissions);
+  };
 
-const handleMoveToAvailable = (permId: number) => {
-  const newPermissions = selectedPermissions.filter(p => p !== permId);
-  setSelectedPermissions(newPermissions);
-  setValue('permissions', newPermissions); // 👈 ¡ACTUALIZA EL CAMPO DEL FORMULARIO!
-};
+  const handleMoveToAvailable = (permId: number) => {
+    const newPermissions = selectedPermissions.filter(p => p !== permId);
+    setSelectedPermissions(newPermissions);
+    setValue('permissions', newPermissions);
+  };
 
-const handleMoveAllToChosen = () => {
-  const allIds = availablePermissions.map(p => p.id);
-  setSelectedPermissions(allIds);
-  setValue('permissions', allIds); // 👈 ¡SINCRONIZA!
-};
+  const handleMoveAllToChosen = () => {
+    const allIds = availablePermissions.map(p => p.id);
+    setSelectedPermissions(allIds);
+    setValue('permissions', allIds);
+  };
 
-const handleMoveAllToAvailable = () => {
-  setSelectedPermissions([]);
-  setValue('permissions', []); // 👈 ¡SINCRONIZA!
-};
+  const handleMoveAllToAvailable = () => {
+    setSelectedPermissions([]);
+    setValue('permissions', []);
+  };
 
   const chosenPerms = useMemo(() => {
     return availablePermissions.filter(p => selectedPermissions.includes(p.id))
@@ -142,7 +138,7 @@ const handleMoveAllToAvailable = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-8">
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl p-6 md:p-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{isEdit ? 'Editar Grupo' : 'Nuevo Grupo'}</h2>
           <button
@@ -208,18 +204,20 @@ const handleMoveAllToAvailable = () => {
                   <button
                     type="button"
                     onClick={handleMoveAllToChosen}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                    className="text-blue-600 hover:text-blue-800 transition-colors px-2 py-2 rounded border border-blue-100 mb-2 w-full flex items-center justify-center"
                     aria-label="Añadir todos los permisos"
+                    title="Añadir todos los permisos"
                   >
-                  
+                    &gt;&gt;
                   </button>
                   <button
                     type="button"
                     onClick={handleMoveAllToAvailable}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                    className="text-blue-600 hover:text-blue-800 transition-colors px-2 py-2 rounded border border-blue-100 w-full flex items-center justify-center"
                     aria-label="Remover todos los permisos"
+                    title="Remover todos los permisos"
                   >
-             
+                    &lt;&lt;
                   </button>
                 </div>
 
@@ -245,7 +243,6 @@ const handleMoveAllToAvailable = () => {
                 <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
               ))}
 
-              {/* ✅ MENSAJE ESPECÍFICO SI EL GRUPO YA EXISTE */}
               {formErrors.name && formErrors.name.some(msg => msg.toLowerCase().includes('already exists')) && (
                 <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800">
                   ⚠️ Ya existe un grupo con este nombre. Elige otro.

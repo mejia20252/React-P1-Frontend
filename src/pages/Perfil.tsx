@@ -6,10 +6,10 @@ import axiosInstance from '../app/axiosInstance';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faUserCircle } from '@fortawesome/free-solid-svg-icons';
 
+
 async function getUsuario(id: number) {
   try {
-    const { data } = await axiosInstance.get(`/usuarios/${id}/`);
-    console.log(data, 'Datos del usuario recibidos.');
+    const { data } = await axiosInstance.get(`/usuarios/me/`);
   } catch (error) {
     console.error('Error al obtener el usuario:', error);
   }
