@@ -45,7 +45,7 @@ export default function VehiculoList() {
     (vehiculo) =>
       vehiculo.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (vehiculo.dueno &&
-        `${vehiculo.dueno.nombre} ${vehiculo.dueno.apellido_paterno}`
+        `${vehiculo.dueno_nombre_completo}`
           .toLowerCase()
           .includes(searchTerm.toLowerCase()))
   );
@@ -125,11 +125,11 @@ export default function VehiculoList() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-800">{vehiculo.placa}</h3>
                   <p className="text-sm text-gray-600">
-                    {getVehiculoTipoDisplay(vehiculo.tipo)} • Dueño: {vehiculo.dueno.nombre} {vehiculo.dueno.apellido_paterno}
+                    {getVehiculoTipoDisplay(vehiculo.tipo)} • Dueño: {vehiculo.dueno_nombre_completo}
                   </p>
                   {vehiculo.casa ? (
                     <p className="text-sm text-gray-500 mt-1">
-                      Asignado a: {vehiculo.casa.numero_casa} ({vehiculo.casa.tipo_de_unidad})
+                      Asignado a: {vehiculo.casa_numero_casa})
                     </p>
                   ) : (
                     <p className="text-sm text-gray-400 mt-1">Sin casa asignada</p>

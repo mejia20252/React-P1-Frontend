@@ -1,46 +1,116 @@
 // src/pages/Perfil.tsx
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axiosInstance from '../app/axiosInstance';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faUserCircle } from '@fortawesome/free-solid-svg-icons';
 
+// 👇 Define interfaces aquí temporalmente (o muévelas a src/types/user.ts)
+export interface Rol {
+  id: number;
+  nombre: string;
+}
 
-async function getUsuario(id: number) {
+export interface UserProfile {
+  id: number;
+  username: string;
+  email: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  sexo: string | null;
+  direccion: string | null;
+  fecha_nacimiento: string | null; // 'YYYY-MM-DD'
+  rol: Rol;
+  fecha_inicio_contrato: string | null;
+  fecha_fin_contrato: string | null;
+  fecha_adquisicion: string | null;
+  numero_licencia: string | null;
+  tipo_personal: string | null;
+  fecha_ingreso: string | null;
+  salario: number | null;
+  fecha_certificacion: string | null;
+  empresa: string | null;
+}
+
+// 👇 Actualizado: incluye campos opcionales que pueden venir del perfil extendido
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  rol: Rol;
+  sexo?: string | null;
+  direccion?: string | null;
+  fecha_nacimiento?: string | null;
+  tipo_personal?: string | null;
+  fecha_ingreso?: string | null;
+  salario?: number | null;
+  fecha_certificacion?: string | null;
+  empresa?: string | null;
+}
+
+// Función para obtener el perfil completo del usuario
+async function fetchUserProfile(id: number): Promise<UserProfile | null> {
   try {
-    const { data } = await axiosInstance.get(`/usuarios/me/`);
+    const { data } = await axiosInstance.get<UserProfile>(`/usuarios/${id}/`);
+    return data;
   } catch (error) {
     console.error('Error al obtener el usuario:', error);
+    return null;
   }
 }
 
 export default function Perfil() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const roleToChangePasswordPath: Record<string, string> = {
+    Administrador: '/administrador/cambiar-contra',
+    Propietario: '/propietario/cambiar-contra',
+    Portero: '/portero/cambiar-contra',
+    Empleado: '/empleado/cambiar-contra',
+  };
+
+  const changePasswordPath = roleToChangePasswordPath[user?.rol?.nombre || ''] || '/cambiar-contra';
 
   useEffect(() => {
-    // Si el usuario existe, podemos llamar a la API
-    if (user?.id) {
-      getUsuario(user.id);
+    if (user?.id && !userProfile) {
+      setProfileLoading(true);
+      fetchUserProfile(user.id)
+        .then(data => {
+          setUserProfile(data);
+          setProfileLoading(false);
+        })
+        .catch(() => {
+          setProfileLoading(false);
+        });
+    } else if (!user?.id) {
+      setProfileLoading(false);
     }
-  }, [user]);
+  }, [user, userProfile]);
 
-  if (loading) {
+  // Estado de carga combinado
+  if (loading || profileLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <p className="text-gray-600">Cargando perfil...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+        <p className="text-gray-700 text-lg">Cargando perfil...</p>
       </div>
     );
   }
 
+  // Si no hay usuario autenticado
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-gray-50">
-        <p className="mb-4 text-gray-600">No hay una sesión activa.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-gray-100">
+        <p className="mb-6 text-gray-700 text-xl font-medium">No hay una sesión activa.</p>
         <NavLink
           to="/login"
-          className="px-4 py-2 text-sm font-medium text-white transition-colors duration-200 rounded-md shadow-sm bg-blue-600 hover:bg-blue-700"
+          className="px-6 py-3 text-base font-semibold text-white transition-all duration-300 rounded-lg shadow-md bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           Iniciar sesión
         </NavLink>
@@ -48,48 +118,127 @@ export default function Perfil() {
     );
   }
 
+  // 👇 Usamos userProfile si está disponible, sino user (con campos opcionales, no habrá error)
+  const displayUser = userProfile || user;
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen flex flex-col items-center">
-      <div className="w-full max-w-2xl">
+    <div className="p-4 sm:p-6 lg:p-8 bg-gray-100 min-h-screen flex justify-center">
+      <div className="w-full max-w-3xl">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center px-4 py-2 mb-6 text-sm font-medium text-gray-700 transition-colors duration-200 rounded-md hover:bg-gray-200 focus:outline-none"
+          className="flex items-center px-4 py-2 mb-6 text-sm font-medium text-gray-700 transition-colors duration-200 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+          <FontAwesomeIcon icon={faArrowLeft} className="mr-2 text-base" />
           Atrás
         </button>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex flex-col items-center mb-6">
-            <FontAwesomeIcon icon={faUserCircle} className="text-blue-600 text-6xl mb-4" />
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight text-center">
-              Perfil de Usuario
+        <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8 lg:p-10">
+          <div className="flex flex-col items-center mb-8">
+            <FontAwesomeIcon icon={faUserCircle} className="text-blue-600 text-7xl mb-4" />
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight text-center">
+              {displayUser.nombre} {displayUser.apellido_paterno}
             </h1>
-            <p className="text-sm font-medium text-gray-500 mt-1">{user.rol?.nombre}</p>
+            <p className="text-base font-medium text-gray-500 mt-2">{displayUser.rol?.nombre}</p>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-gray-100 rounded-lg p-5">
-              <h2 className="font-semibold text-lg text-gray-800 mb-3">Información personal</h2>
-              <dl className="space-y-3">
-                <div className="flex justify-between items-center border-b pb-2">
-                  <dt className="text-gray-500">ID</dt>
-                  <dd className="font-medium text-gray-900">{user.id}</dd>
+            <div className="bg-gray-50 rounded-lg p-5 sm:p-6 border border-gray-200">
+              <h2 className="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">Información Personal</h2>
+              <dl className="space-y-4 text-sm sm:text-base">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <dt className="text-gray-600 font-medium w-1/3">ID de Usuario:</dt>
+                  <dd className="font-semibold text-gray-900 w-2/3 break-words text-right">{displayUser.id}</dd>
                 </div>
-                <div className="flex justify-between items-center border-b pb-2">
-                  <dt className="text-gray-500">Nombre de usuario</dt>
-                  <dd className="font-medium text-gray-900 break-words">{user.username}</dd>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <dt className="text-gray-600 font-medium w-1/3">Nombre de Usuario:</dt>
+                  <dd className="font-semibold text-gray-900 w-2/3 break-words text-right">{displayUser.username}</dd>
                 </div>
-                <div className="flex justify-between items-center">
-                  <dt className="text-gray-500">ID del Rol</dt>
-                  <dd className="font-medium text-gray-900">{user.rol?.id}</dd>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <dt className="text-gray-600 font-medium w-1/3">Nombre Completo:</dt>
+                  <dd className="font-semibold text-gray-900 w-2/3 break-words text-right">
+                    {displayUser.nombre} {displayUser.apellido_paterno} {displayUser.apellido_materno}
+                  </dd>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <dt className="text-gray-600 font-medium w-1/3">Email:</dt>
+                  <dd className="font-semibold text-blue-600 w-2/3 break-words text-right">{displayUser.email}</dd>
+                </div>
+                {displayUser.sexo && (
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <dt className="text-gray-600 font-medium w-1/3">Género:</dt>
+                    <dd className="font-semibold text-gray-900 w-2/3 text-right">{displayUser.sexo}</dd>
+                  </div>
+                )}
+                {displayUser.fecha_nacimiento && (
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <dt className="text-gray-600 font-medium w-1/3">Fecha de Nacimiento:</dt>
+                    <dd className="font-semibold text-gray-900 w-2/3 text-right">
+                      {new Date(displayUser.fecha_nacimiento).toLocaleDateString()}
+                    </dd>
+                  </div>
+                )}
+                {displayUser.direccion && (
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <dt className="text-gray-600 font-medium w-1/3">Dirección:</dt>
+                    <dd className="font-semibold text-gray-900 w-2/3 break-words text-right">{displayUser.direccion}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-5 sm:p-6 border border-gray-200">
+              <h2 className="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">Información del Rol</h2>
+              <dl className="space-y-4 text-sm sm:text-base">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <dt className="text-gray-600 font-medium w-1/3">Rol:</dt>
+                  <dd className="font-semibold text-gray-900 w-2/3 text-right">{displayUser.rol?.nombre}</dd>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <dt className="text-gray-600 font-medium w-1/3">ID del Rol:</dt>
+                  <dd className="font-semibold text-gray-900 w-2/3 text-right">{displayUser.rol?.id}</dd>
                 </div>
               </dl>
             </div>
-            
+
+            {/* Sección condicional: Información Laboral (solo si aplica) */}
+            {displayUser.tipo_personal && (
+              <div className="bg-gray-50 rounded-lg p-5 sm:p-6 border border-gray-200">
+                <h2 className="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">Información Laboral</h2>
+                <dl className="space-y-4 text-sm sm:text-base">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <dt className="text-gray-600 font-medium w-1/3">Tipo de Personal:</dt>
+                    <dd className="font-semibold text-gray-900 w-2/3 text-right">{displayUser.tipo_personal}</dd>
+                  </div>
+                  {displayUser.fecha_ingreso && (
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                      <dt className="text-gray-600 font-medium w-1/3">Fecha de Ingreso:</dt>
+                      <dd className="font-semibold text-gray-900 w-2/3 text-right">
+                        {new Date(displayUser.fecha_ingreso).toLocaleDateString()}
+                      </dd>
+                    </div>
+                  )}
+                  {displayUser.salario !== null && (
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                      <dt className="text-gray-600 font-medium w-1/3">Salario:</dt>
+                      <dd className="font-semibold text-gray-900 w-2/3 text-right">
+                        {displayUser.salario != null && (
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                            <dt className="text-gray-600 font-medium w-1/3">Salario:</dt>
+                            <dd className="font-semibold text-gray-900 w-2/3 text-right">
+                              ${Number(displayUser.salario).toFixed(2)}
+                            </dd>
+                          </div>
+                        )}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
+
             <NavLink
-              to="/administrador/cambiar-contra"
-              className="flex justify-center items-center w-full px-4 py-3 text-sm font-medium text-white transition-colors duration-200 rounded-md shadow-sm bg-blue-600 hover:bg-blue-700"
+              to={changePasswordPath}
+              className="flex justify-center items-center w-full px-6 py-3 text-base font-semibold text-white transition-all duration-300 rounded-lg shadow-md bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
               Cambiar contraseña
             </NavLink>

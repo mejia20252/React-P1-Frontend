@@ -1,37 +1,46 @@
-// src/pages/Administrador/Casa/CasaForm.tsx
+// src/pages/Administrador/Casa/CasaFormV1.tsx
+
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { CasaSchema, type CasaFormData } from '../../../schemas/schema-casa';
-import { casaApi } from '../../../api/api-casa';
+import { casaApiV1 } from '../../../api/api-casa-v1';
+import type {  CasaFormData } from '../../../types/type-casa-v1';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toUiError } from '../../../api/error';
+import { validateCasaForm } from '../../../utils/validateCasaForm';
 
-export default function CasaForm() {
+export default function CasaFormV1() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const isEditing = !!id && id !== 'new'; // Solo edición si es ID numérico
-    const isCreating = id === 'new'; // Creación explícita
+    const isEditing = !!id && id !== 'new';
+    const isCreating = id === 'new';
 
     const [error, setTopError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<keyof CasaFormData, string>>({} as any);
     const [loading, setLoading] = useState(false);
-    const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
+    // ✅ Define defaultValues con el tipo exacto CasaFormData
+    const defaultValues: CasaFormData = {
+        numero_casa: '',
+        tipo_de_unidad: '',
+        numero: 0,
+        area: '',
+        estado_ocupacion: 'desocupada',
+        tiene_parqueo_asignado: false,
+        piso: undefined,
+        torre_o_bloque: undefined,
+        numero_parqueo: undefined,
+        observaciones: undefined,
+    };
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors: rhfErrors }, // Solo para estilos, no validación
         setValue,
+        watch,
+        getValues,
     } = useForm<CasaFormData>({
-        resolver: zodResolver(CasaSchema),
-        defaultValues: {
-            numero_casa: '',
-            tipo_de_unidad: '',
-            numero: 0,
-            area: 0,
-            propietario_nombre: '',
-        },
+        defaultValues,
     });
 
     // Cargar datos si es edición
@@ -39,18 +48,17 @@ export default function CasaForm() {
         if (isEditing) {
             const loadCasa = async () => {
                 try {
-                    const casas = await casaApi.getAll();
-                    const casa = casas.find((c) => c.id === parseInt(id));
-                    if (casa) {
-                        setValue('numero_casa', casa.numero_casa);
-                        setValue('tipo_de_unidad', casa.tipo_de_unidad);
-                        setValue('numero', casa.numero);
-                        setValue('area', casa.area);
-                        if (casa.propietario) {
-                            const fullName = `${casa.propietario.usuario.nombre} ${casa.propietario.usuario.apellido_paterno}`;
-                            setValue('propietario_nombre', fullName);
-                        }
-                    }
+                    const casa = await casaApiV1.fetchCasa(parseInt(id!));
+                    setValue('numero_casa', casa.numero_casa);
+                    setValue('tipo_de_unidad', casa.tipo_de_unidad);
+                    setValue('numero', casa.numero);
+                    setValue('area', casa.area);
+                    setValue('piso', casa.piso ?? undefined);
+                    setValue('torre_o_bloque', casa.torre_o_bloque ?? undefined);
+                    setValue('tiene_parqueo_asignado', casa.tiene_parqueo_asignado);
+                    setValue('numero_parqueo', casa.numero_parqueo ?? undefined);
+                    setValue('estado_ocupacion', casa.estado_ocupacion);
+                    setValue('observaciones', casa.observaciones ?? undefined);
                 } catch (err) {
                     setTopError('No se pudo cargar la casa.');
                 }
@@ -59,24 +67,55 @@ export default function CasaForm() {
         }
     }, [id, isEditing, setValue]);
 
-    const onSubmit = async (data: CasaFormData) => {
+    const onSubmit = async () => {
         setLoading(true);
         setTopError(null);
+        setFieldErrors({} as any);
+
+        const data = getValues();
+
+        // ✅ Validación manual
+        const validationErrors = validateCasaForm(data);
+        if (validationErrors.length > 0) {
+            const fieldErrorsMap = {} as Record<keyof CasaFormData, string>;
+            validationErrors.forEach(err => {
+                fieldErrorsMap[err.field] = err.message;
+            });
+            setFieldErrors(fieldErrorsMap);
+            setLoading(false);
+            return;
+        }
 
         try {
+            // ✅ Convertir undefined → null para campos opcionales
+            const payload = {
+                ...data,
+                piso: data.piso === undefined ? null : data.piso,
+                torre_o_bloque: data.torre_o_bloque === undefined ? null : data.torre_o_bloque,
+                numero_parqueo: data.numero_parqueo === undefined ? null : data.numero_parqueo,
+                observaciones: data.observaciones === undefined ? null : data.observaciones,
+            };
+
             if (isEditing) {
-                await casaApi.update(parseInt(id), data);
+                await casaApiV1.update(parseInt(id!), payload);
             } else {
-                await casaApi.create(data);
+                await casaApiV1.create(payload);
             }
-            navigate('/administrador/casas'); // ← Redirección programática (¡como en RolList!)
+
+            navigate('/administrador/casas');
         } catch (err) {
-            const { message, fields } = toUiError(err);
+            const { message } = toUiError(err);
             setTopError(message);
-            if (fields) setFormErrors(fields);
         } finally {
             setLoading(false);
         }
+    };
+
+    const tieneParqueoAsignado = watch('tiene_parqueo_asignado');
+
+    // Helper para mostrar error de campo
+    const getFieldError = (field: keyof CasaFormData) => {
+        return fieldErrors[field] || (rhfErrors[field]?.message as string | undefined);
     };
 
     return (
@@ -100,16 +139,12 @@ export default function CasaForm() {
                             {...register('numero_casa')}
                             type="text"
                             placeholder="Ej: A-101"
-                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${errors.numero_casa ? 'border-red-500' : 'border-gray-300'
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('numero_casa') ? 'border-red-500' : 'border-gray-300'
                                 }`}
                         />
-                        {errors.numero_casa && (
-                            <p className="mt-1 text-xs text-red-500">{errors.numero_casa.message}</p>
+                        {getFieldError('numero_casa') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('numero_casa')}</p>
                         )}
-                        {formErrors.numero_casa?.map((m, i) => (
-                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                        ))}
-
                     </div>
 
                     {/* Tipo de Unidad */}
@@ -117,7 +152,7 @@ export default function CasaForm() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Unidad *</label>
                         <select
                             {...register('tipo_de_unidad')}
-                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${errors.tipo_de_unidad ? 'border-red-500' : 'border-gray-300'
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('tipo_de_unidad') ? 'border-red-500' : 'border-gray-300'
                                 }`}
                         >
                             <option value="">Seleccionar...</option>
@@ -127,8 +162,8 @@ export default function CasaForm() {
                             <option value="duplex">Duplex</option>
                             <option value="otro">Otro</option>
                         </select>
-                        {errors.tipo_de_unidad && (
-                            <p className="mt-1 text-xs text-red-500">{errors.tipo_de_unidad.message}</p>
+                        {getFieldError('tipo_de_unidad') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('tipo_de_unidad')}</p>
                         )}
                     </div>
 
@@ -139,11 +174,11 @@ export default function CasaForm() {
                             {...register('numero', { valueAsNumber: true })}
                             type="number"
                             placeholder="Ej: 101"
-                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${errors.numero ? 'border-red-500' : 'border-gray-300'
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('numero') ? 'border-red-500' : 'border-gray-300'
                                 }`}
                         />
-                        {errors.numero && (
-                            <p className="mt-1 text-xs text-red-500">{errors.numero.message}</p>
+                        {getFieldError('numero') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('numero')}</p>
                         )}
                     </div>
 
@@ -151,32 +186,107 @@ export default function CasaForm() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Área (m²) *</label>
                         <input
-                            {...register('area', { valueAsNumber: true })}
-                            type="number"
-                            step="0.01"
-                            placeholder="Ej: 85.5"
-                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${errors.area ? 'border-red-500' : 'border-gray-300'
+                            {...register('area')}
+                            type="text"
+                            placeholder="Ej: 85.50"
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('area') ? 'border-red-500' : 'border-gray-300'
                                 }`}
                         />
-                        {errors.area && (
-                            <p className="mt-1 text-xs text-red-500">{errors.area.message}</p>
+                        {getFieldError('area') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('area')}</p>
                         )}
                     </div>
 
-                    {/* Asignar Propietario */}
+                    {/* Estado de Ocupación */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Asignar Propietario (nombre o email)
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Ocupación *</label>
+                        <select
+                            {...register('estado_ocupacion')}
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('estado_ocupacion') ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                        >
+                            <option value="desocupada">Desocupada</option>
+                            <option value="ocupada">Ocupada</option>
+                            <option value="en_mantenimiento">En Mantenimiento</option>
+                            <option value="suspendida">Suspendida</option>
+                        </select>
+                        {getFieldError('estado_ocupacion') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('estado_ocupacion')}</p>
+                        )}
+                    </div>
+
+                    {/* Tiene Parqueo Asignado */}
+                    <div className="flex items-center">
                         <input
-                            {...register('propietario_nombre')}
-                            type="text"
-                            placeholder="Ej: Juan Pérez o juan@ejemplo.com"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                            {...register('tiene_parqueo_asignado')}
+                            type="checkbox"
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                         />
-                        <p className="mt-1 text-xs text-gray-500">
-                            Ingresa el nombre completo o email de un usuario ya registrado.
-                        </p>
+                        <label className="ml-2 block text-sm text-gray-700">
+                            Tiene parqueo asignado
+                        </label>
+                    </div>
+
+                    {/* Número de Parqueo (opcional) */}
+                    {tieneParqueoAsignado && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Parqueo</label>
+                            <input
+                                {...register('numero_parqueo')}
+                                type="text"
+                                placeholder="Ej: P-102"
+                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('numero_parqueo') ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                            />
+                            {getFieldError('numero_parqueo') && (
+                                <p className="mt-1 text-xs text-red-500">{getFieldError('numero_parqueo')}</p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Torre o Bloque (opcional) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Torre o Bloque</label>
+                        <input
+                            {...register('torre_o_bloque')}
+                            type="text"
+                            placeholder="Ej: Torre A"
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('torre_o_bloque') ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                        />
+                        {getFieldError('torre_o_bloque') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('torre_o_bloque')}</p>
+                        )}
+                    </div>
+
+                    {/* Piso (opcional) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Piso</label>
+                        <input
+                            {...register('piso', { valueAsNumber: true })}
+                            type="number"
+                            placeholder="Ej: 3"
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('piso') ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                        />
+                        {getFieldError('piso') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('piso')}</p>
+                        )}
+                    </div>
+
+                    {/* Observaciones (opcional) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                        <textarea
+                            {...register('observaciones')}
+                            rows={3}
+                            placeholder="Notas adicionales sobre la unidad..."
+                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${getFieldError('observaciones') ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                        />
+                        {getFieldError('observaciones') && (
+                            <p className="mt-1 text-xs text-red-500">{getFieldError('observaciones')}</p>
+                        )}
                     </div>
 
                     {/* Botones */}

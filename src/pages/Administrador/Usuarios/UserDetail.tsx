@@ -34,11 +34,10 @@ const UserDetail: React.FC = () => {
   if (error) return <div className="p-6 text-red-500 bg-red-50 border border-red-200 rounded-lg">{error}</div>;
   if (!user) return <div className="p-6">Usuario no encontrado.</div>;
 
-  // UserDetail.tsx - Reemplaza la función formatDate por esta versión más segura:
-const formatDate = (dateStr: string | null | undefined): string => {
-  if (!dateStr) return 'No especificado';
-  return new Date(dateStr).toLocaleDateString('es-ES');
-};
+  const formatDate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return 'No especificado';
+    return new Date(dateStr).toLocaleDateString('es-ES');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -81,6 +80,10 @@ const formatDate = (dateStr: string | null | undefined): string => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
                 <dl className="space-y-3">
                   <div className="flex justify-between">
+                    <dt className="text-sm text-gray-500">Rol</dt>
+                    <dd className="text-sm font-medium text-gray-900">{user.rol_nombre || 'No asignado'}</dd>
+                  </div>
+                  <div className="flex justify-between">
                     <dt className="text-sm text-gray-500">Sexo</dt>
                     <dd className="text-sm font-medium text-gray-900">
                       {user.sexo === 'M' ? 'Masculino' : user.sexo === 'F' ? 'Femenino' : 'No especificado'}
@@ -94,72 +97,6 @@ const formatDate = (dateStr: string | null | undefined): string => {
                     <dt className="text-sm text-gray-500">Dirección</dt>
                     <dd className="text-sm font-medium text-gray-900">{user.direccion || 'No especificada'}</dd>
                   </div>
-                </dl>
-              </div>
-
-              {/* Rol y Datos Específicos */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Rol y Detalles</h3>
-                <dl className="space-y-3">
-                  <div className="flex justify-between">
-                    <dt className="text-sm text-gray-500">Rol</dt>
-                    <dd className="text-sm font-medium">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.rol.nombre === 'Inquilino' ? 'bg-blue-100 text-blue-800' :
-                        user.rol.nombre === 'Propietario' ? 'bg-green-100 text-green-800' :
-                        user.rol.nombre === 'Administrador' ? 'bg-purple-100 text-purple-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {user.rol.nombre}
-                      </span>
-                    </dd>
-                  </div>
-
-                  {user.rol.nombre === "Inquilino" && (
-                    <>
-                      <div className="flex justify-between">
-                        <dt className="text-sm text-gray-500">Inicio de contrato</dt>
-                        <dd className="text-sm font-medium text-gray-900">{formatDate(user.fecha_inicio_contrato)}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-sm text-gray-500">Fin de contrato</dt>
-                        <dd className="text-sm font-medium text-gray-900">{formatDate(user.fecha_fin_contrato)}</dd>
-                      </div>
-                    </>
-                  )}
-
-                  {user.rol.nombre === "Propietario" && user.fecha_adquisicion && (
-                    <div className="flex justify-between">
-                      <dt className="text-sm text-gray-500">Fecha de adquisición</dt>
-                      <dd className="text-sm font-medium text-gray-900">{formatDate(user.fecha_adquisicion)}</dd>
-                    </div>
-                  )}
-
-                  {user.rol.nombre === "Administrador" && user.numero_licencia && (
-                    <div className="flex justify-between">
-                      <dt className="text-sm text-gray-500">Número de licencia</dt>
-                      <dd className="text-sm font-medium text-gray-900">{user.numero_licencia}</dd>
-                    </div>
-                  )}
-
-                  {user.rol.nombre === "Personal" && (
-                    <>
-                      <div className="flex justify-between">
-                        <dt className="text-sm text-gray-500">Tipo de personal</dt>
-                        <dd className="text-sm font-medium text-gray-900">{user.tipo_personal || 'No especificado'}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-sm text-gray-500">Fecha de ingreso</dt>
-                        <dd className="text-sm font-medium text-gray-900">{formatDate(user.fecha_ingreso)}</dd>
-                      </div>
-                      {user.salario && (
-                        <div className="flex justify-between">
-                          <dt className="text-sm text-gray-500">Salario</dt>
-                          <dd className="text-sm font-medium text-gray-900">${Number(user.salario).toFixed(2)}</dd>
-                        </div>
-                      )}
-                    </>
-                  )}
                 </dl>
               </div>
 

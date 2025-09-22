@@ -13,7 +13,7 @@ export interface TareaMantenimiento {
   descripcion: string | null;
   casa: number | null;           // ID de Casa
   area_comun: number | null;     // ID de AreaComun
-  ubicacion_personalizada: string;
+  ubicacion_personalizada: string | null; // <-- Changed to allow null
   prioridad: PrioridadTarea;
   estado: EstadoTarea;
   fecha_creacion: string;        // ISO string
@@ -22,12 +22,12 @@ export interface TareaMantenimiento {
 
 // Para crear/editar
 export type TareaMantenimientoCreateRequest = {
-  titulo?: string | null;
-  descripcion?: string | null;
+  titulo?: string | null;          // <-- Added | null
+  descripcion?: string | null;     // <-- Added | null
   casa?: number | null;
   area_comun?: number | null;
-  ubicacion_personalizada?: string;
+  ubicacion_personalizada?: string | null; // <-- Changed to allow null
   prioridad?: PrioridadTarea;
   estado?: EstadoTarea;
-  costo_estimado?: string | null;
+  costo_estimado?: string | null;  // <-- Added | null
 };

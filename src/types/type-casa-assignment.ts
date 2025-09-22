@@ -1,7 +1,7 @@
 // src/types/type-casa-assignment.ts
 
 export interface VehiculoAsignarCasaDTO {
-  casa_id: number;
+  casa: number;
 }
 
 export interface VehiculoDesasignarCasaDTO {

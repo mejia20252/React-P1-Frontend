@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import axiosInstance from '../../../app/axiosInstance';
-import type { Group } from '../../../types/index';
+import type { Group } from '../../../types/type-group';
 
 const GrupoList: React.FC = () => {
   const [grupos, setGrupos] = useState<Group[]>([]);

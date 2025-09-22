@@ -38,6 +38,10 @@ const AsignarCasaModal: React.FC<AsignarCasaModalProps> = ({
 
   const handleAssign = async () => {
     if (selectedCasaId === null) return;
+ console.log('Enviando asignación de casa:', {
+      vehiculoId: vehiculoId,
+      casaId: selectedCasaId,
+    });
 
     try {
       const updatedVehiculo = await vehiculoApiAgigment.asignarCasa(vehiculoId, selectedCasaId);

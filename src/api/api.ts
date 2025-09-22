@@ -3,7 +3,7 @@ import axios from '../app/axiosInstance'
 import type {
   CustomUser,
   UpdateUserDto, CreateUserDto
-} from '../types'
+} from '../types/type-customuser'
 
 
 export function createUsuario(dto: CreateUserDto) {

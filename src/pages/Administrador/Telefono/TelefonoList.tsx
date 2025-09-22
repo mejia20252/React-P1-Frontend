@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchTelefonos, deleteTelefono } from '../../../api/telefono';
-import type { Telefono } from '../../../types';
+import type { Telefono } from '../../../types/type-telefono';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 

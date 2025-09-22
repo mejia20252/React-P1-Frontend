@@ -21,6 +21,8 @@ export interface UsuarioDto {
  */
 export const fetchUsuarios = async (): Promise<Usuario[]> => {
   const { data } = await axiosInstance.get<Usuario[]>('/usuarios/');
+  console.log(data,'mydata wa');
+  
   return data;
 };
 

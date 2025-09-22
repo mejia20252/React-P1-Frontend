@@ -3,19 +3,25 @@ import { useEffect } from 'react';
 
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import { type Rol } from '../types'
+import { type Rol } from '../types/type-rol'
 import { login, logoutAPI, setEncabezado } from '../api/auth';
 import axiosInstance from '../app/axiosInstance';
-interface CustomUser{
-        id: number;
-        username: string;
-        nombre: string;
-        apellido_paterno: string;
-        apellido_materno: string;
-        email: string;
-        direccion: string |null;
-        fecha_nacimiento: string |null;
-        rol:Rol;
+interface CustomUser {
+    id: number;
+    username: string;
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+    email: string;
+    direccion: string | null;
+    fecha_nacimiento: string | null;
+    rol: Rol;
+    sexo?: string | null;
+    tipo_personal?: string | null;
+    fecha_ingreso?: string | null;
+    salario?: number | null;
+    fecha_certificacion?: string | null;
+    empresa?: string | null;
 }
 
 interface AuthContextType {

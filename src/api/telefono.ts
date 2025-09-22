@@ -1,6 +1,6 @@
 // src/api/telefonos.ts
 import axiosInstance from '../app/axiosInstance';
-import type { Telefono } from '../types';
+import type { Telefono } from '../types/type-telefono';
 
 /**
  * Recupera la lista completa de teléfonos.

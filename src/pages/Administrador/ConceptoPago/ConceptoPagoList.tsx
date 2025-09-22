@@ -110,7 +110,7 @@ const ConceptoPagoList: React.FC = () => {
                     {getTipoBadge(concepto.es_fijo)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {concepto.es_fijo ? `$${concepto.monto_fijo}` : '—'}
+                    {concepto.es_fijo ? `Bs.${concepto.monto_fijo}` : '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {getEstadoBadge(concepto.activo)}

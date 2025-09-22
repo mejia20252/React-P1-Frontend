@@ -1,9 +1,11 @@
 // src/config/menuItems.ts
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faHome, faUsers, faCogs, faBoxOpen,faPhone,
-   faShoppingCart, faUserShield,faMoneyBillWave,
-    faBuilding, faPaw, faCar,faTreeCity ,faBullhorn,faSignOutAlt,faUser,
-    faGear} from '@fortawesome/free-solid-svg-icons';
+import { faHome,faCreditCard, faUsers, faCogs, faBoxOpen,faPhone,
+   faShoppingCart, faUserShield,faMoneyBillWave,faCalendarCheck,
+   faEnvelopeOpenText,faClipboardList,
+    faBuilding, faPaw, faCar,faTreeCity ,faBullhorn,faSignOutAlt,faUser,faBell,
+    faGear,faShieldAlt,
+    faTasks} from '@fortawesome/free-solid-svg-icons';
 
 export interface MenuItem {
   to?: string; // Make 'to' optional for parent items
@@ -34,7 +36,9 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
         { to: '/administrador/roles', title: 'Roles', icon: faCogs },
         { to: '/administrador/grupos', title: 'Permisos', icon: faUserShield },
         { to: '/administrador/bitacoras', title: 'Bitacoras', icon: faBoxOpen  },
-        { to: '/   dministrador/telefonos', title: 'Telefonos', icon: faPhone  },
+        { to: '/administrador/telefonos', title: 'Telefonos', icon: faPhone  },
+        { to: '/administrador/perfiltrabajador', title: 'Perfiles Trabajadores', icon: faUsers  },
+        { to: '/administrador/asignacionestarea', title: 'Asignar Tareas', icon: faTasks  },
       ],
     },
     {
@@ -49,6 +53,8 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
         { to: '/administrador/conceptos-pago', title: 'Conceptos-pago', icon: faMoneyBillWave   },
         { to: '/administrador/cuotas', title: 'Cuotas', icon: faMoneyBillWave   },
         { to: '/administrador/pagos', title: 'Pagos', icon: faMoneyBillWave   },
+        { to: '/administrador/asignar-propietario', title: 'Asignar Propietario', icon: faUserShield },
+        { to: '/administrador/contratos-arrendamiento', title: 'contratos arerendamiento', icon: faUserShield },
       ],
     },
      {
@@ -64,6 +70,101 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
       ],
     },
    
+  ],
+  Propietario: [
+    { to: '/propietario/dashboard', title: 'DASHBOARD', icon: faHome },
+    {
+      title: 'Mi Perfil',
+      icon: faUser,
+      subItems: [
+        { to: '/propietario/perfil', title: 'Datos Personales', icon: faUser },
+        { to: '/propietario/mis-propiedades', title: 'Mi Residencia', icon: faBuilding },
+        { to: '/propietario/telefonos', title: 'Mis Teléfonos', icon: faPhone },
+        { to: '/propietario/cambiar-contra', title: 'Cambiar Contraseña', icon: faGear },
+        { title: 'Cerrar sesión', icon: faSignOutAlt, action: 'signout' },
+      ],
+    },
+    {
+      title: 'Finanzas',
+      icon: faMoneyBillWave,
+      subItems: [
+        { to: '/propietario/cuotas', title: 'Mis Cuotas', icon: faCreditCard },
+        { to: '/propietario/historial-pagos', title: 'Historial de Pagos', icon: faClipboardList },
+        // { to: '/propietario/pagar-cuotas', title: 'Pagar Cuotas', icon: faMoneyBillWave }, // Integrar en 'Mis Cuotas' o una vista aparte
+      ],
+    },
+    {
+      title: 'Comunicación',
+      icon: faBullhorn,
+      subItems: [
+        { to: '/propietario/comunicados', title: 'Avisos y Comunicados', icon: faEnvelopeOpenText },
+      ],
+    },
+    {
+      title: 'Áreas Comunes',
+      icon: faTreeCity,
+      subItems: [
+        { to: '/propietario/areas-comunes', title: 'Ver Áreas Comunes', icon: faTreeCity },
+        { to: '/propietario/reservas', title: 'Mis Reservas', icon: faCalendarCheck },
+        // { to: '/propietario/hacer-reserva', title: 'Hacer Nueva Reserva', icon: faShoppingCart }, // Integrar en 'Ver Áreas Comunes'
+      ],
+    },
+    {
+      title: 'Seguridad y Bienes',
+      icon: faShieldAlt,
+      subItems: [
+        { to: '/propietario/vehiculos', title: 'Mis Vehículos', icon: faCar },
+        { to: '/propietario/mascotas', title: 'Mis Mascotas', icon: faPaw },
+        { to: '/propietario/historial-accesos', title: 'Historial de Accesos', icon: faBoxOpen }, // Asumimos un acceso limitado a su info
+      ],
+    },
+  ],
+  Inquilino: [
+    { to: '/inquilino/dashboard', title: 'DASHBOARD', icon: faHome },
+    {
+      title: 'Mi Perfil',
+      icon: faUser,
+      subItems: [
+        { to: '/inquilino/perfil', title: 'Datos Personales', icon: faUser },
+        { to: '/inquilino/mi-residencia', title: 'Mi Residencia', icon: faBuilding }, // Para ver detalles de la casa que habita
+        { to: '/inquilino/telefonos', title: 'Mis Teléfonos', icon: faPhone },
+        { to: '/inquilino/cambiar-contra', title: 'Cambiar Contraseña', icon: faGear },
+        { title: 'Cerrar sesión', icon: faSignOutAlt, action: 'signout' },
+      ],
+    },
+    {
+      title: 'Finanzas',
+      icon: faMoneyBillWave,
+      subItems: [
+        { to: '/inquilino/cuotas', title: 'Mis Cuotas y Pagos', icon: faCreditCard }, // Para consulta y pago
+        { to: '/inquilino/historial-pagos', title: 'Historial de Pagos', icon: faClipboardList },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      icon: faBullhorn,
+      subItems: [
+        { to: '/inquilino/comunicados', title: 'Avisos y Comunicados', icon: faEnvelopeOpenText },
+        { to: '/inquilino/notificaciones', title: 'Notificaciones IA', icon: faBell }, // Para notificaciones Push
+      ],
+    },
+    {
+      title: 'Áreas Comunes',
+      icon: faTreeCity,
+      subItems: [
+        { to: '/inquilino/areas-comunes', title: 'Ver Áreas Comunes', icon: faTreeCity },
+        { to: '/inquilino/reservas', title: 'Mis Reservas', icon: faCalendarCheck },
+      ],
+    },
+     {
+      title: 'Seguridad y Bienes',
+      icon: faShieldAlt,
+      subItems: [
+        { to: '/inquilino/vehiculos', title: 'Mis Vehículos', icon: faCar },
+        { to: '/inquilino/mascotas', title: 'Mis Mascotas', icon: faPaw },
+        { to: '/inquilino/historial-accesos', title: 'Historial de Accesos', icon: faBoxOpen }, // Asumimos un acceso limitado a su info
+      ],
+    },
   ],
  
   // ... (other roles)

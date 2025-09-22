@@ -10,7 +10,6 @@ import { casaApi } from '../../../api/api-casa';
 import type { Casa } from '../../../types/type-casa';
 import type { ComunicadoFormData } from '../../../schemas/schema-comunicado';
 import { toUiError } from '../../../api/error';
-// después
 import { useForm, type SubmitHandler, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { comunicadoCreateSchemaWithValidation } from '../../../schemas/schema-comunicado';
@@ -25,14 +24,13 @@ const ComunicadoForm: React.FC = () => {
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
   const [casas, setCasas] = useState<Casa[]>([]);
 
-    const {
+  const {
     register,
     handleSubmit,
     setValue,
     watch,
     formState: { isSubmitting, errors },
   } = useForm<ComunicadoFormData>({
-    // casteamos el resolver a Resolver<ComunicadoFormData, any> para alinear los tipos
     resolver: zodResolver(comunicadoCreateSchemaWithValidation) as unknown as Resolver<
       ComunicadoFormData,
       any
@@ -52,26 +50,27 @@ const ComunicadoForm: React.FC = () => {
   // Cargar casas y datos si es edición
   useEffect(() => {
     const loadDependencies = async () => {
+      setLoading(true); // Start loading when dependencies are being loaded
       try {
         const casasData = await casaApi.getAll();
         setCasas(casasData);
 
         if (isEdit && id) {
-          setLoading(true);
           const comunicado = await comunicadoApi.getById(Number(id));
 
           setValue('titulo', comunicado.titulo);
           setValue('contenido', comunicado.contenido);
-          setValue('fecha_publicacion', comunicado.fecha_publicacion);
+          // Assuming fecha_publicacion and fecha_expiracion are ISO strings or null
+          setValue('fecha_publicacion', comunicado.fecha_publicacion ? new Date(comunicado.fecha_publicacion).toISOString().slice(0, 16) : null);
           setValue('estado', comunicado.estado);
           setValue('casa_destino', comunicado.casa_destino);
-          setValue('fecha_expiracion', comunicado.fecha_expiracion);
+          setValue('fecha_expiracion', comunicado.fecha_expiracion ? new Date(comunicado.fecha_expiracion).toISOString().slice(0, 16) : null);
         }
       } catch (error) {
         console.error('Error al cargar datos:', error);
         setTopError('Error al cargar datos necesarios.');
       } finally {
-        setLoading(false);
+        setLoading(false); // End loading regardless of success or failure
       }
     };
 
@@ -85,13 +84,18 @@ const ComunicadoForm: React.FC = () => {
     try {
       const formData = new FormData();
 
-      // Añadir campos al FormData (para soportar archivo si lo agregas después)
       formData.append('titulo', data.titulo);
       formData.append('contenido', data.contenido);
-      if (data.fecha_publicacion) formData.append('fecha_publicacion', data.fecha_publicacion);
       formData.append('estado', data.estado);
-      if (data.casa_destino) formData.append('casa_destino', data.casa_destino.toString());
-      if (data.fecha_expiracion) formData.append('fecha_expiracion', data.fecha_expiracion);
+
+      // Ensure dates are sent explicitly, even if null.
+      // If data.fecha_publicacion is null, an empty string will be sent, which the backend should interpret as null.
+      // If it's an ISO string, the string will be sent.
+      formData.append('fecha_publicacion', data.fecha_publicacion || '');
+      formData.append('fecha_expiracion', data.fecha_expiracion || '');
+
+      // If casa_destino is null, an empty string is sent.
+      formData.append('casa_destino', data.casa_destino ? data.casa_destino.toString() : '');
 
       if (isEdit && id) {
         await comunicadoApi.update(Number(id), formData as any);
@@ -152,9 +156,8 @@ const ComunicadoForm: React.FC = () => {
               type="text"
               id="titulo"
               {...register('titulo')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                errors.titulo || serverErrors.titulo ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.titulo || serverErrors.titulo ? 'border-red-500' : 'border-gray-300'
+                }`}
               placeholder="Ej: Aviso de corte de agua"
             />
             {errors.titulo && <p className="mt-1 text-sm text-red-600">{errors.titulo.message}</p>}
@@ -170,9 +173,8 @@ const ComunicadoForm: React.FC = () => {
               id="contenido"
               {...register('contenido')}
               rows={5}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                errors.contenido || serverErrors.contenido ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.contenido || serverErrors.contenido ? 'border-red-500' : 'border-gray-300'
+                }`}
               placeholder="Escribe aquí el contenido del comunicado..."
             />
             {errors.contenido && <p className="mt-1 text-sm text-red-600">{errors.contenido.message}</p>}
@@ -187,9 +189,8 @@ const ComunicadoForm: React.FC = () => {
             <select
               id="estado"
               {...register('estado')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                errors.estado || serverErrors.estado ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.estado || serverErrors.estado ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               <option value="borrador">Borrador</option>
               <option value="publicado">Publicado</option>
@@ -208,9 +209,8 @@ const ComunicadoForm: React.FC = () => {
               type="datetime-local"
               id="fecha_publicacion"
               {...register('fecha_publicacion')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                errors.fecha_publicacion || serverErrors.fecha_publicacion ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.fecha_publicacion || serverErrors.fecha_publicacion ? 'border-red-500' : 'border-gray-300'
+                }`}
               disabled={estadoValue !== 'publicado'}
             />
             {errors.fecha_publicacion && <p className="mt-1 text-sm text-red-600">{errors.fecha_publicacion.message}</p>}
@@ -225,13 +225,14 @@ const ComunicadoForm: React.FC = () => {
             <select
               id="casa_destino"
               {...register('casa_destino', { valueAsNumber: true })}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                errors.casa_destino || serverErrors.casa_destino ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.casa_destino || serverErrors.casa_destino ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               <option value="">Todo el condominio</option>
               {casas.map(casa => (
-                <option key={casa.id} value={casa.id}>Casa #{casa.numero}</option>
+                <option key={casa.id} value={casa.id}>
+                  Casa #{casa.numero_casa}
+                </option>
               ))}
             </select>
             {errors.casa_destino && <p className="mt-1 text-sm text-red-600">{errors.casa_destino.message}</p>}
@@ -247,9 +248,8 @@ const ComunicadoForm: React.FC = () => {
               type="datetime-local"
               id="fecha_expiracion"
               {...register('fecha_expiracion')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                errors.fecha_expiracion || serverErrors.fecha_expiracion ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.fecha_expiracion || serverErrors.fecha_expiracion ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.fecha_expiracion && <p className="mt-1 text-sm text-red-600">{errors.fecha_expiracion.message}</p>}
             {serverErrors.fecha_expiracion?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
@@ -267,9 +267,8 @@ const ComunicadoForm: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 ${
-                isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 ${isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
             >
               {isSubmitting ? (
                 <>

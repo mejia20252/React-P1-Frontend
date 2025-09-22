@@ -1,18 +1,18 @@
-// src/pages/Admin/Users/UserForms.tsx
+// src/pages/Admin/Users/UserForm.tsx
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchRoles } from '../../../api/rol';
-import { fetchUser, createUser, updateUser } from '../../../api/user';
-import type { CustomUserResponse, CreateUserPayload } from '../../../types/user';
-import type { Rol } from '../../../types/index';
+import { createUser, fetchUser, updateUser } from '../../../api/user';
+import type { CreateUserPayload } from '../../../types/user';
+import type { Rol } from '../../../types/type-rol';
 import { toUiError } from '../../../api/error';
 import { userSchema, type UserFormState } from '../../../schemas/user';
 
 const UserForm: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
-    const isEdit = Boolean(id);
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const isEditing = !!id;
 
     const [form, setForm] = useState<UserFormState>({
         username: '',
@@ -26,92 +26,75 @@ const UserForm: React.FC = () => {
         email: null,
         direccion: null,
         fecha_nacimiento: null,
-
-        fecha_inicio_contrato: null,
-        fecha_fin_contrato: null,
-        fecha_adquisicion: null,
-        numero_licencia: null,
-        tipo_personal: null,
-        fecha_ingreso: null,
-        salario: null,
     });
-
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [roles, setRoles] = useState<Rol[]>([]);
-    const [rolNombre, setRolNombre] = useState<string | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
     const [topError, setTopError] = useState<string>('');
     const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
-    // Cargar roles al montar
+    // Cargar roles y datos del usuario si estamos editando
     useEffect(() => {
-        fetchRoles()
-            .then(setRoles)
-            .catch(console.error);
-    }, []);
-
-    // Cargar usuario si es edición
-    useEffect(() => {
-        if (isEdit && id) {
+        const loadFormData = async () => {
             setLoading(true);
-            fetchUser(+id)
-                .then((user: CustomUserResponse) => {
+            try {
+                const rolesData = await fetchRoles();
+                setRoles(rolesData);
+
+                if (isEditing && id) {
+                    const userData = await fetchUser(+id);
                     setForm({
-                        username: user.username,
-                        password: '', // No mostrar contraseña en edición
+                        username: userData.username,
+                        password: '', // No precargar por seguridad
                         confirm: '',
-                        rol: user.rol.id,
-                        nombre: user.nombre,
-                        apellido_paterno: user.apellido_paterno,
-                        apellido_materno: user.apellido_materno,
-                        sexo: user.sexo || null,
-                        email: user.email || null,
-                        direccion: user.direccion || null,
-                        fecha_nacimiento: user.fecha_nacimiento || null,
-
-                        fecha_inicio_contrato: user.fecha_inicio_contrato || null,
-                        fecha_fin_contrato: user.fecha_fin_contrato || null,
-                        fecha_adquisicion: user.fecha_adquisicion || null,
-                        numero_licencia: user.numero_licencia || null,
-                        tipo_personal: user.tipo_personal || null,
-                        fecha_ingreso: user.fecha_ingreso || null,
-                        salario: user.salario || null,
+                        rol: userData.rol || null, // userData.rol es un número ahora
+                        nombre: userData.nombre,
+                        apellido_paterno: userData.apellido_paterno,
+                        apellido_materno: userData.apellido_materno,
+                        sexo: userData.sexo,
+                        email: userData.email,
+                        direccion: userData.direccion,
+                        fecha_nacimiento: userData.fecha_nacimiento,
                     });
+                }
+            } catch (err) {
+                const uiError = toUiError(err);
+                setTopError(uiError.message);
+                console.error("Error cargando datos:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-                    setRolNombre(user.rol.nombre);
-                })
-                .catch((err) => {
-                    const { message, fields } = toUiError(err);
-                    setTopError(message);
-                    if (fields) setFormErrors(fields);
-                })
-                .finally(() => setLoading(false));
-        }
-    }, [id, isEdit]);
+        loadFormData();
+    }, [id, isEditing]);
+
+    const togglePasswordVisibility = () => setShowPassword(prev => !prev);
+    const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(prev => !prev);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-
         setForm(prev => ({
             ...prev,
-            [name]: name === 'rol' ? (value ? Number(value) : null) : value,
+            [name]: name === 'rol' ? (value ? Number(value) : null) : (value === '' ? null : value),
         }));
-
-        if (name === 'rol') {
-            const selectedRol = roles.find(r => r.id === (value ? Number(value) : null));
-            setRolNombre(selectedRol?.nombre || null);
-        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setTopError('');
         setFormErrors({});
+        console.log('📋 Estado completo del formulario:', form);
 
         // ✅ VALIDACIÓN CON ZOD
-        const result = userSchema.safeParse({
-            ...form,
-            rolNombre,
-        });
+        let dataToValidate: Partial<UserFormState> = { ...form };
+        if (isEditing && form.password === '') {
+            delete dataToValidate.password;
+            delete dataToValidate.confirm;
+        }
+
+        const result = userSchema.safeParse(dataToValidate);
 
         if (!result.success) {
             const fieldErrors = result.error.flatten().fieldErrors;
@@ -120,50 +103,44 @@ const UserForm: React.FC = () => {
             return;
         }
 
-        // ✅ VALIDACIÓN ADICIONAL: ASEGURARSE DE QUE ROL ESTÉ SELECCIONADO
-        if (form.rol === null) {
-            setFormErrors({
-                rol: ["Debe seleccionar un rol."],
-            });
-            setTopError("Debe seleccionar un rol.");
-            return;
-        }
-
         try {
-            const payload: CreateUserPayload = {
-                username: form.username,
-                password: form.password || '',
-                email: form.email || undefined,
-                nombre: form.nombre,
-                apellido_paterno: form.apellido_paterno,
-                apellido_materno: form.apellido_materno,
-                sexo: form.sexo || undefined,
-                direccion: form.direccion || undefined,
-                fecha_nacimiento: form.fecha_nacimiento || undefined,
-                rol_nombre: rolNombre as string,
-                fecha_inicio_contrato: form.fecha_inicio_contrato || undefined,
-                fecha_fin_contrato: form.fecha_fin_contrato || undefined,
-                fecha_adquisicion: form.fecha_adquisicion || undefined,
-                numero_licencia: form.numero_licencia || undefined,
-                tipo_personal: form.tipo_personal || undefined,
-                fecha_ingreso: form.fecha_ingreso || undefined,
-                salario: form.salario || undefined,
-            };
-            // ✅ AÑADIR CONSOLE.LOG PARA VER EL PAYLOAD
-        console.log('Payload enviado al backend:', payload);
             setLoading(true);
-            if (isEdit && id) {
-                await updateUser(+id, payload);
-            } else {
-                await createUser(payload);
+
+            const { confirm, password, ...cleanPayload } = form;
+
+            const payload: CreateUserPayload = {
+                username: cleanPayload.username,
+                email: cleanPayload.email || undefined,
+                nombre: cleanPayload.nombre,
+                apellido_paterno: cleanPayload.apellido_paterno,
+                apellido_materno: cleanPayload.apellido_materno,
+                sexo: cleanPayload.sexo || undefined,
+                direccion: cleanPayload.direccion || undefined,
+                fecha_nacimiento: cleanPayload.fecha_nacimiento || undefined,
+                rol: form.rol!,
+            };
+
+            if (!isEditing || (isEditing && password !== '')) {
+                payload.password = password;
             }
 
+            console.log('Payload enviado al backend:', payload);
+
+            if (isEditing && id) {
+                await updateUser(+id, payload);
+            } else {
+                if (!payload.password || payload.password === '') {
+                    setFormErrors(prev => ({ ...prev, password: ['La contraseña es obligatoria para crear un usuario.'] }));
+                    setTopError('Por favor corrige los errores en el formulario.');
+                    return;
+                }
+                await createUser(payload);
+            }
             navigate('/administrador/usuarios');
         } catch (err) {
             const { message, fields } = toUiError(err);
             setTopError(message);
-            console.log('e', fields);
-
+            console.log('Errores de campo:', fields);
             if (fields) setFormErrors(fields);
         } finally {
             setLoading(false);
@@ -180,7 +157,7 @@ const UserForm: React.FC = () => {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex items-center justify-between mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {isEdit ? 'Editar Usuario' : 'Crear Usuario'}
+                        {isEditing ? 'Editar Usuario' : 'Crear Usuario'}
                     </h1>
                     <button
                         onClick={() => navigate(-1)}
@@ -197,7 +174,7 @@ const UserForm: React.FC = () => {
                 )}
 
                 {loading ? (
-                    <div className="text-center py-12 text-gray-500">Guardando cambios...</div>
+                    <div className="text-center py-12 text-gray-500">Cargando formulario...</div>
                 ) : (
                     <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                         {/* Datos Personales */}
@@ -213,14 +190,12 @@ const UserForm: React.FC = () => {
                                         name="username"
                                         value={form.username}
                                         onChange={handleChange}
-                                        required
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.username ? 'border-red-500' : 'border-gray-300'}`}
                                     />
                                     {formErrors.username?.map((m, i) => (
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Email (opcional)
@@ -228,7 +203,7 @@ const UserForm: React.FC = () => {
                                     <input
                                         type="email"
                                         name="email"
-                                        value={form.email ?? ''} // ✅ CORREGIDO
+                                        value={form.email ?? ''}
                                         onChange={handleChange}
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.email ? 'border-red-500' : 'border-gray-300'}`}
                                     />
@@ -236,7 +211,6 @@ const UserForm: React.FC = () => {
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Nombre *
@@ -253,7 +227,6 @@ const UserForm: React.FC = () => {
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Apellido Paterno *
@@ -270,7 +243,6 @@ const UserForm: React.FC = () => {
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Apellido Materno *
@@ -287,7 +259,6 @@ const UserForm: React.FC = () => {
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Sexo
@@ -306,7 +277,6 @@ const UserForm: React.FC = () => {
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Fecha de Nacimiento
@@ -314,7 +284,7 @@ const UserForm: React.FC = () => {
                                     <input
                                         type="date"
                                         name="fecha_nacimiento"
-                                        value={form.fecha_nacimiento ?? ''} // ✅ CORREGIDO
+                                        value={form.fecha_nacimiento ?? ''}
                                         onChange={handleChange}
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.fecha_nacimiento ? 'border-red-500' : 'border-gray-300'}`}
                                     />
@@ -322,7 +292,6 @@ const UserForm: React.FC = () => {
                                         <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                     ))}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Dirección
@@ -330,7 +299,7 @@ const UserForm: React.FC = () => {
                                     <input
                                         type="text"
                                         name="direccion"
-                                        value={form.direccion ?? ''} // ✅ CORREGIDO
+                                        value={form.direccion ?? ''}
                                         onChange={handleChange}
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.direccion ? 'border-red-500' : 'border-gray-300'}`}
                                     />
@@ -341,20 +310,74 @@ const UserForm: React.FC = () => {
                             </div>
                         </div>
 
-                        <div>
+                        {/* Contraseña */}
+                        <div className="relative mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Contraseña{isEdit ? ' (dejar en blanco para no cambiar)' : ' *'}
+                                Contraseña {isEditing ? '(dejar en blanco para no cambiar)' : '*'}
                             </label>
                             <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 name="password"
-                                value={form.password ?? ''}
+                                value={form.password}
                                 onChange={handleChange}
-                                required={!isEdit}
-                                placeholder={isEdit ? 'Dejar vacío para no cambiar' : 'Ingrese su contraseña'}
-                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.password ? 'border-red-500' : 'border-gray-300'}`}
+                                required={!isEditing}
+                                placeholder={isEditing ? 'Dejar en blanco para no cambiar' : 'Ingrese su contraseña'}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${formErrors.password ? 'border-red-500' : 'border-gray-300'}`}
                             />
+                            <button
+                                type="button"
+                                onClick={togglePasswordVisibility}
+                                className="absolute right-3 top-10 text-gray-500 hover:text-gray-700"
+                                tabIndex={-1}
+                            >
+                                {showPassword ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.414-1.414a8.007 8.007 0 00-3.5-3.5L4.707 2.293zM12 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                )}
+                            </button>
                             {formErrors.password?.map((m, i) => (
+                                <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
+                            ))}
+                        </div>
+
+                        {/* Confirmar Contraseña */}
+                        <div className="relative mb-8">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Confirmar contraseña {isEditing ? '(dejar en blanco para no cambiar)' : '*'}
+                            </label>
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                name="confirm"
+                                value={form.confirm}
+                                onChange={handleChange}
+                                required={!isEditing}
+                                placeholder={isEditing ? 'Dejar en blanco para no cambiar' : 'Confirme su contraseña'}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${formErrors.confirm ? 'border-red-500' : 'border-gray-300'}`}
+                            />
+                            <button
+                                type="button"
+                                onClick={toggleConfirmPasswordVisibility}
+                                className="absolute right-3 top-10 text-gray-500 hover:text-gray-700"
+                                tabIndex={-1}
+                            >
+                                {showConfirmPassword ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.414-1.414a8.007 8.007 0 00-3.5-3.5L4.707 2.293zM12 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                )}
+                            </button>
+                            {formErrors.confirm?.map((m, i) => (
                                 <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                             ))}
                         </div>
@@ -382,10 +405,6 @@ const UserForm: React.FC = () => {
                                 {formErrors.rol?.map((m, i) => (
                                     <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
                                 ))}
-                                {formErrors.rolNombre?.map((m, i) => (
-                                    <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                ))}
-
                                 {form.rol && (
                                     <p className="mt-2 text-sm text-gray-600">
                                         <strong>Rol seleccionado:</strong> {getRolNombre(form.rol)}
@@ -393,209 +412,6 @@ const UserForm: React.FC = () => {
                                 )}
                             </div>
                         </div>
-
-                        {/* Campos Dinámicos por Rol */}
-                        {rolNombre === "Inquilino" && (
-                            <div className="mb-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                    </svg>
-                                    Datos de Inquilino
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Fecha de inicio de contrato *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="fecha_inicio_contrato"
-                                            value={form.fecha_inicio_contrato ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.fecha_inicio_contrato ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.fecha_inicio_contrato?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Fecha de fin de contrato *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="fecha_fin_contrato"
-                                            value={form.fecha_fin_contrato ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.fecha_fin_contrato ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.fecha_fin_contrato?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {rolNombre === "Propietario" && (
-                            <div className="mb-8 p-6 bg-green-50 rounded-xl border border-green-200">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                                    </svg>
-                                    Datos de Propietario
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Fecha de adquisición *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="fecha_adquisicion"
-                                            value={form.fecha_adquisicion ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.fecha_adquisicion ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.fecha_adquisicion?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {rolNombre === "Administrador" && (
-                            <div className="mb-8 p-6 bg-purple-50 rounded-xl border border-purple-200">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <svg className="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                    Datos de Administrador
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Número de licencia *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="numero_licencia"
-                                            value={form.numero_licencia ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.numero_licencia ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.numero_licencia?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-                                    {/* NUEVO: Fecha de certificación */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Fecha de certificación
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="fecha_certificacion"
-                                            value={form.fecha_certificacion ?? ''}
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.fecha_certificacion ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.fecha_certificacion?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-                                    {/* NUEVO: Empresa */}
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Empresa
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="empresa"
-                                            value={form.empresa ?? ''}
-                                            onChange={handleChange}
-                                            placeholder="Nombre de la empresa o institución"
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.empresa ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.empresa?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-
-                                </div>
-                            </div>
-                        )}
-
-                        {rolNombre === "Personal" && (
-                            <div className="mb-8 p-6 bg-orange-50 rounded-xl border border-orange-200">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <svg className="w-5 h-5 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                    </svg>
-                                    Datos de Personal
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Tipo de personal *
-                                        </label>
-                                        <select
-                                            name="tipo_personal"
-                                            value={form.tipo_personal ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.tipo_personal ? 'border-red-500' : 'border-gray-300'}`}
-                                        >
-                                            <option value="">-- Seleccione tipo --</option>
-                                            <option value="seguridad">Seguridad</option>
-                                            <option value="mantenimiento">Mantenimiento</option>
-                                            <option value="limpieza">Limpieza</option>
-                                            <option value="jardineria">Jardinería</option>
-                                        </select>
-                                        {formErrors.tipo_personal?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Fecha de ingreso *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            name="fecha_ingreso"
-                                            value={form.fecha_ingreso ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.fecha_ingreso ? 'border-red-500' : 'border-gray-300'}`}
-                                        />
-                                        {formErrors.fecha_ingreso?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Salario (opcional)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            name="salario"
-                                            value={form.salario ?? ''} // ✅ CORREGIDO
-                                            onChange={handleChange}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.salario ? 'border-red-500' : 'border-gray-300'}`}
-                                            placeholder="0.00"
-                                        />
-                                        {formErrors.salario?.map((m, i) => (
-                                            <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Botones */}
                         <div className="flex justify-end pt-6 border-t border-gray-200">
@@ -611,7 +427,7 @@ const UserForm: React.FC = () => {
                                 disabled={loading}
                                 className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                {isEdit ? 'Actualizar Usuario' : 'Crear Usuario'}
+                                {isEditing ? 'Guardar Cambios' : 'Crear Usuario'}
                             </button>
                         </div>
                     </form>

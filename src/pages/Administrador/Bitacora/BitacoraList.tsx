@@ -1,47 +1,35 @@
-// src/pages/Admin/Bitacora/BitacoraList.tsx
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { fetchBitacoras } from '../../../api/api-bitacora'
-import type{ Bitacora } from '../../../types/type-bitacora'
-import { fetchUsuarios } from '../../../api/api'
-import { toUiError } from '../../../api/error'
-import type { CustomUser } from '../../../types/type-customuser'
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { fetchBitacoras } from '../../../api/api-bitacora';
+import type { Bitacora } from '../../../types/type-bitacora1'; 
+import { toUiError } from '../../../api/error';
 
 const BitacoraList: React.FC = () => {
-  const [entries, setEntries] = useState<Bitacora[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [usuarios, setUsuarios] = useState<CustomUser[]>([])
-  const navigate = useNavigate()
+  const [entries, setEntries] = useState<Bitacora[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const load = async () => {
+  const loadBitacoras = async () => { 
     try {
-      setLoading(true)
-      setError(null)
-      const data = await fetchBitacoras()
-      setEntries(Array.isArray(data) ? data : [])
+      setLoading(true);
+      setError(null);
+      const data = await fetchBitacoras();
+      console.log('datae es ',data);
+      
+      setEntries(Array.isArray(data) ? data : []);
     } catch (err) {
-      const uiError = toUiError(err)
-      setError(uiError.message)
+      const uiError = toUiError(err);
+      setError(uiError.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const loadUsers = async () => {
-    try {
-      const data = await fetchUsuarios()
-      setUsuarios(Array.isArray(data) ? data : [])
-    } catch (err) {
-      console.error('Error cargando usuarios:', err)
-      // No mostramos error al usuario aquí, solo fallback en UI
-    }
-  }
+  };
 
   useEffect(() => {
-    load()
-    loadUsers()
-  }, [])
+    loadBitacoras();
+    // loadUsers(); // YA NO ES NECESARIO
+  }, []);
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
@@ -62,7 +50,7 @@ const BitacoraList: React.FC = () => {
             <strong>Error:</strong> {error}
           </div>
           <button
-            onClick={load}
+            onClick={loadBitacoras} // Usamos loadBitacoras
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
           >
             Reintentar
@@ -84,7 +72,8 @@ const BitacoraList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left border-b font-medium text-gray-700">ID</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Usuario</th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Usuario (Nombre)</th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Usuario (Rol)</th> {/* Nuevo campo */}
                 <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Login</th>
                 <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Logout</th>
                 <th className="px-4 py-3 text-left border-b font-medium text-gray-700">IP</th>
@@ -97,7 +86,10 @@ const BitacoraList: React.FC = () => {
                 <tr key={e.id} className="hover:bg-gray-50 transition">
                   <td className="px-4 py-3 border-b">{e.id}</td>
                   <td className="px-4 py-3 border-b">
-                    {usuarios.find(u => u.id === e.usuario)?.username || 'Desconocido'}
+                    {e.usuario ? `${e.usuario.nombre} ${e.usuario.apellido_paterno}` : 'Desconocido'}
+                  </td>
+                  <td className="px-4 py-3 border-b">
+                    {e.usuario && e.usuario.rol ? e.usuario.rol.nombre : '—'}
                   </td>
                   <td className="px-4 py-3 border-b">
                     {new Date(e.login).toLocaleString()}
@@ -122,7 +114,7 @@ const BitacoraList: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default BitacoraList
+export default BitacoraList;

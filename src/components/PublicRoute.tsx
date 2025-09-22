@@ -6,10 +6,9 @@ import { useAuth } from '../contexts/AuthContext'
 const roleHome = (role?: string) => {
   switch (role) {
     case 'Administrador': return '/administrador'
+    case 'Propietario':       return '/propietario'
     case 'Inquilino':       return '/inquilino'
-    case 'Cajero':        return '/cajero'
-    case 'Repartidor':    return '/repartidor'
-     default: return '/unauthorized'; // CAMBIAR AQUI
+    default: return '/unauthorized'; // CAMBIAR AQUI
   }
 }
 

@@ -50,6 +50,21 @@ import CuotaForm from '../pages/Administrador/Cuota/CuotaForm';
 import PagoList from '../pages/Administrador/Pago/PagoList';
 import PagoForm from '../pages/Administrador/Pago/PagoForm';
 
+import PropiedadList from '../pages/Administrador/Propietario/PropiedadList';
+import PropiedadForm from '../pages/Administrador/Propietario/PropiedadForm';
+
+
+import PerfilTrabajadorForm from '../pages/Administrador/PerfilTrabajador/PerfilTrabajadorForm';
+import PerfilTrabajadorList from '../pages/Administrador/PerfilTrabajador/PerfilTrabajadorList';
+
+import AsignacionTareaForm from '../pages/Administrador/AsignacionTarea/AsignacionTareaForm';
+import AsignacionTareaList from '../pages/Administrador/AsignacionTarea/AsignacionTareaList';
+
+import ContratoArrendamientoForm from '../pages/Administrador/ContratosArrendamiento/ContratoArrendamientoForm';
+import ContratoArrendamientoList from '../pages/Administrador/ContratosArrendamiento/ContratoArrendamientoList';
+
+
+
 
 import ChangePassword from '../pages/CambiarContras';
 import Perfil from '../pages/Perfil.tsx';
@@ -75,6 +90,7 @@ const AdminRoutes: React.FC = () => (
             <Route path="telefonos" element={<TelefonoList />} />
             <Route path="telefonos/new" element={<TelefonoForm />} />
             <Route path="telefonos/:id/edit" element={<TelefonoForm />} />
+            {/* Rutas para el CRUD de Administrador */}
             {/* Rutas para el CRUD de Administrador */}
             <Route path="usuarios" element={<UserList />} />
             <Route path="usuarios/:id" element={<UserDetail />} />
@@ -103,6 +119,11 @@ const AdminRoutes: React.FC = () => (
             <Route path="areas-comunes" element={<AreasComunesList />} />
             <Route path="areas-comunes/nuevo" element={<AreasComunesForm />} />
             <Route path="areas-comunes/:id/editar" element={<AreasComunesForm />} />
+
+            <Route path="asignacionestarea" element={<AsignacionTareaList />} />
+            <Route path="asignacionestarea/nuevo" element={<AsignacionTareaForm />} />
+            <Route path="asignacionestarea/:id/editar" element={<AsignacionTareaForm />} />
+
             <Route path="reservas" element={<ReservaList />} />
             <Route path="reservas/nuevo" element={<ReservaForm />} />
             <Route path="reservas/:id/editar" element={<ReservaForm />} />
@@ -110,6 +131,7 @@ const AdminRoutes: React.FC = () => (
             <Route path="tareas-mantenimiento" element={<TareaMantenimientoList />} />
             <Route path="tareas-mantenimiento/nuevo" element={<TareaMantenimientoForm />} />
             <Route path="tareas-mantenimiento/:id/editar" element={<TareaMantenimientoForm />} />
+
             <Route path="/comunicados" element={<ComunicadoList />} />
             <Route path="/comunicados/nuevo" element={<ComunicadoForm />} />
             <Route path="/comunicados/:id/editar" element={<ComunicadoForm />} />
@@ -126,10 +148,21 @@ const AdminRoutes: React.FC = () => (
             <Route path="pagos/nuevo" element={<PagoForm />} />
             <Route path="pagos/:id/editar" element={<PagoForm />} />
 
+            <Route path="asignar-propietario" element={<PropiedadList />} />
+            <Route path="asignar-propietario/nuevo" element={<PropiedadForm />} />
+            <Route path="asignar-propietario/:id/editar" element={<PropiedadForm />} />
+
+            <Route path="perfiltrabajador" element={<PerfilTrabajadorList />} />
+            <Route path="perfiltrabajador/nuevo" element={<PerfilTrabajadorForm />} />
+            <Route path="perfiltrabajador/:id/editar" element={<PerfilTrabajadorForm />} />
+
+            <Route path="contratos-arrendamiento" element={<ContratoArrendamientoList />} />
+            <Route path="contratos-arrendamiento/nuevo" element={<ContratoArrendamientoForm />} />
+            <Route path="contratos-arrendamiento/:id/editar" element={<ContratoArrendamientoForm />} />
+
             <Route path='/cambiar-contra' element={<ChangePassword />} />
             <Route path='/perfil' element={<Perfil />} />
 
-            <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Routes>
     </ProtectedRoute>
 );

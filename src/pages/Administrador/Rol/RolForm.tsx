@@ -23,7 +23,7 @@ const RolesForm: React.FC = () => {
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { errors, isSubmitting, isDirty, },
   } = useForm<FormState>({
     resolver: zodResolver(roleSchema),
     mode: 'onSubmit',

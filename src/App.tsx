@@ -7,13 +7,16 @@ import Forbidden from './pages/Forbidden';
 import Perfil from './pages/Perfil';
 import { useAuth } from './contexts/AuthContext';
 import AdministradorRoutes from './routes/AdministradorRoutes';
+import PropietarioRoutes from './routes/PropietarioRoutes';
+import InquilinoRoutes from './routes/InquilinoRoutes';
 
 import Sidebar from './components/Layout/Sidebar';
 import Welcome from './pages/welcom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import UnauthorizedAccess from './pages/UnauthorizedAccess';
-
+import PagoExitoso from './pages/Propietario/Cuota/PagoExitoso.tsx';
+import PagoCancelado from './pages/Propietario/Cuota/PagoCancelado.tsx';
 // Layout protegido con Sidebar único
 const LayoutWithSidebar = () => {
   const { user } = useAuth();
@@ -45,11 +48,36 @@ function App() {
               </ProtectedRoute>
             }
           />
-        
+
+        </Route>
+        <Route element={<ProtectedRoute><LayoutWithSidebar /></ProtectedRoute>}>
+          <Route
+            path="/propietario/*"
+            element={
+              <ProtectedRoute requiredRoles={['Propietario']}>
+                <PropietarioRoutes />
+              </ProtectedRoute>
+            }
+          />
+
+        </Route>
+        <Route element={<ProtectedRoute><LayoutWithSidebar /></ProtectedRoute>}>
+          <Route
+            path="/inquilino/*"
+            element={
+              <ProtectedRoute requiredRoles={['Inquilino']}>
+                <InquilinoRoutes />
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
 
+
+
         {/* errores */}
-        
+        <Route path="/pago-exitoso" element={<PagoExitoso />} />
+        <Route path="/pago-cancelado" element={<PagoCancelado />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route
           path='/perfil' element={<Perfil />} />

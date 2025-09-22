@@ -65,19 +65,19 @@ const CuotaList: React.FC = () => {
     }
   };
 
- const getEstadoBadge = (estado: EstadoCuota) => {
-  const classes: Record<EstadoCuota, string> = {
-    pendiente: 'bg-yellow-100 text-yellow-800',
-    pagada: 'bg-green-100 text-green-800',
-    vencida: 'bg-red-100 text-red-800',
-    cancelada: 'bg-gray-100 text-gray-800',
+  const getEstadoBadge = (estado: EstadoCuota) => {
+    const classes: Record<EstadoCuota, string> = {
+      pendiente: 'bg-yellow-100 text-yellow-800',
+      pagada: 'bg-green-100 text-green-800',
+      vencida: 'bg-red-100 text-red-800',
+      cancelada: 'bg-gray-100 text-gray-800',
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${classes[estado]}`}>
+        {estado.charAt(0).toUpperCase() + estado.slice(1)}
+      </span>
+    );
   };
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${classes[estado]}`}>
-      {estado.charAt(0).toUpperCase() + estado.slice(1)}
-    </span>
-  );
-};
 
   return (
     <div className="p-6">
@@ -130,7 +130,7 @@ const CuotaList: React.FC = () => {
                     {cuota.casa_numero || `ID: ${cuota.casa}`}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${parseFloat(cuota.monto).toFixed(2)}
+                    Bs {parseFloat(cuota.monto).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(cuota.periodo).toLocaleDateString()}

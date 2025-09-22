@@ -5,7 +5,7 @@ import type { Vehiculo } from '../types/type-vehiculo';
 export const vehiculoApiAgigment = {
     // 👇 USANDO DTOs INDEPENDIENTES
     asignarCasa: async (vehiculoId: number, casaId: number): Promise<Vehiculo> => {
-        const payload: VehiculoAsignarCasaDTO = { casa_id: casaId };
+        const payload: VehiculoAsignarCasaDTO = { casa: casaId };
         const { data } = await axiosInstance.post<Vehiculo>(
             `/vehiculos/${vehiculoId}/asignar-casa/`,
             payload

@@ -5,7 +5,25 @@ import { VehiculoSchema, type VehiculoFormData } from '../../../schemas/schema-v
 import { vehiculoApi } from '../../../api/api-vehiculo';
 import { useNavigate, useParams } from 'react-router-dom'; // 👈 AÑADIDO useParams
 import { toUiError } from '../../../api/error';
-import { fetchUsuarios } from '../../../api/api-usuario';
+import axiosInstance from '../../../app/axiosInstance';
+
+export interface Usuario {
+    id: number;
+    username: string;
+    email: string | null;
+    nombre: string;
+    apellido_paterno: string;
+    apellido_materno: string;
+    sexo: 'M' | 'F' | null;
+    direccion: string | null;
+    fecha_nacimiento: string | null;
+    rol: number; // El ID del rol
+    rol_nombre: string | null; // Añadido por to_representation en el Serializer
+}
+export const fetchUsuarios = async (): Promise<Usuario[]> => {
+    const { data } = await axiosInstance.get<Usuario[]>('/usuarios/');
+    return data;
+};
 
 // Tipos recomendados para sugerencias visuales
 const TIPOS_RECOMENDADOS = [
@@ -34,7 +52,7 @@ export default function VehiculoForm() {
         defaultValues: {
             placa: '',
             tipo: 'automovil',
-            dueno_id: 0,
+            dueno: 0, // 👈 Cambiado
         },
     });
 
@@ -44,8 +62,10 @@ export default function VehiculoForm() {
             setLoadingUsuarios(true);
             try {
                 const usuariosData = await fetchUsuarios();
+                console.log('los ssuarioa caragads son ', usuariosData, '-');
+
                 const dueñosValidos = usuariosData.filter(u =>
-                    ['Propietario', 'Inquilino', 'Administrador'].includes(u.rol.nombre)
+                    u.rol_nombre !== null && ['Propietario', 'Inquilino', 'Administrador'].includes(u.rol_nombre)
                 );
                 setUsuarios(
                     dueñosValidos.map(u => ({
@@ -73,7 +93,7 @@ export default function VehiculoForm() {
                 const vehiculo = await vehiculoApi.getOne(id); // 👈 ¡AÚN NO EXISTE! Lo creamos abajo
                 setValue('placa', vehiculo.placa);
                 setValue('tipo', vehiculo.tipo);
-                setValue('dueno_id', vehiculo.dueno.id); // 👈 Asigna el ID del dueño
+                setValue('dueno', vehiculo.dueno); // 👈 Asigna el ID del dueño
             } catch (err: any) {
                 setError('No se pudo cargar el vehículo.');
                 navigate('/administrador/vehiculos');
@@ -183,8 +203,8 @@ export default function VehiculoForm() {
                             <p className="text-sm text-gray-500">Cargando dueños...</p>
                         ) : (
                             <select
-                                {...register('dueno_id', { valueAsNumber: true })}
-                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${errors.dueno_id ? 'border-red-500' : 'border-gray-300'
+                                {...register('dueno', { valueAsNumber: true })}
+                                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${errors.dueno ? 'border-red-500' : 'border-gray-300'
                                     }`}
                             >
                                 <option value="">-- Selecciona un dueño --</option>
@@ -199,8 +219,8 @@ export default function VehiculoForm() {
                                 )}
                             </select>
                         )}
-                        {errors.dueno_id && (
-                            <p className="mt-1 text-xs text-red-500">{errors.dueno_id.message}</p>
+                        {errors.dueno && (
+                            <p className="mt-1 text-xs text-red-500">{errors.dueno.message}</p>
                         )}
                     </div>
 

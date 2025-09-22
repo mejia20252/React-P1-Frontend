@@ -4,26 +4,19 @@ export type VehiculoTipoStandard = 'automovil' | 'motocicleta' | 'camioneta' | '
 export type VehiculoTipo = VehiculoTipoStandard | string;
 
 export interface Vehiculo {
-  id: number;
+  id: number; // ID es siempre numérico y existe para vehículos ya creados
   placa: string;
-  tipo: VehiculoTipo;
-  dueno: {
-    id: number;
-    nombre: string;
-    apellido_paterno: string;
-    apellido_materno?: string;
-    email?: string;
-  };
-  casa: {
-    id: number;
-    numero_casa: string;
-    tipo_de_unidad: string;
-  } | null;
+  tipo: string;
+  dueno: number; // ID del Usuario
+  casa: number | null; // ID de la Casa, puede ser null
+  dueno_nombre_completo?: string; // Solo para lectura
+  casa_numero_casa?: string; // Solo para lectura
 }
 
-// 👇 NUEVO: Tipo para el formulario (incluye dueno_id)
+// Asegúrate de que este tipo se derive del schema si usas Zod
+// Si no, asegúrate de que 'dueno' sea el campo en el formulario, no 'dueno_id'
 export type VehiculoFormData = {
   placa: string;
   tipo: string;
-  dueno_id: number; // 👈 Nuevo campo: ID del dueño
+  dueno: number; // Campo `dueno` en el payload, que es el ID del usuario
 };

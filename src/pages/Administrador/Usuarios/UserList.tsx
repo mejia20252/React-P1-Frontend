@@ -7,7 +7,7 @@ import type { CustomUserResponse } from '../../../types/user';
 import { useNavigate } from 'react-router-dom';
 import { toUiError } from '../../../api/error';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash, faUser, faEnvelope, faCalendar, faIdCard } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faUser, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const UserList: React.FC = () => {
   const [users, setUsers] = useState<CustomUserResponse[]>([]);
@@ -31,8 +31,8 @@ const UserList: React.FC = () => {
 
     loadUsers();
   }, []);
+
   const handleClick = (id: number) => {
-    // Corrección: usar la ruta correcta según tu enrutamiento
     navigate(`/administrador/usuarios/${id}`);
   };
 
@@ -117,9 +117,10 @@ const UserList: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Mostrar rol_nombre en lugar de user.rol?.nombre */}
                 <div className="mb-3">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {user.rol.nombre}
+                    {user.rol_nombre ?? 'Sin Rol'}
                   </span>
                 </div>
 
@@ -130,29 +131,7 @@ const UserList: React.FC = () => {
                   </div>
                 )}
 
-                {user.rol.nombre === "Inquilino" && user.fecha_inicio_contrato && (
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <FontAwesomeIcon icon={faCalendar} className="w-3 h-3 mr-1" />
-                      Contrato:
-                    </div>
-                    <p className="text-xs font-medium text-gray-900">
-                      {new Date(user.fecha_inicio_contrato).toLocaleDateString('es-ES')} →
-                      {user.fecha_fin_contrato ? ` ${new Date(user.fecha_fin_contrato).toLocaleDateString('es-ES')}` : ' Pendiente'}
-                    </p>
-                  </div>
-                )}
-
-                {user.rol.nombre === "Administrador" && user.numero_licencia && (
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <FontAwesomeIcon icon={faIdCard} className="w-3 h-3 mr-1" />
-                      Licencia:
-                    </div>
-                    <p className="text-xs font-medium text-gray-900">{user.numero_licencia}</p>
-                  </div>
-                )}
-                <button 
+                <button
                   onClick={() => handleClick(user.id)}
                   className="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
@@ -180,11 +159,8 @@ const UserList: React.FC = () => {
                   </div>
                 )}
               </div>
-              
             ))}
-            
           </div>
-          
         )}
       </div>
     </div>

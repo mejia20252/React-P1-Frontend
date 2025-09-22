@@ -16,9 +16,12 @@ export const fetchUser = async (id: number): Promise<CustomUserResponse> => {
   return response.data;
 };
 
-// ✅ Create new user (with dynamic fields)
+// ✅ Create new user
 export const createUser = async (payload: CreateUserPayload): Promise<CustomUserResponse> => {
-  const response = await axiosInstance.post<CustomUserResponse>('/usuarios/', payload);
+  // Ensure we only send fields defined in CreateUserPayload
+  const cleanPayload = { ...payload };
+  // No need to manually delete fields if payload type is correctly inferred
+  const response = await axiosInstance.post<CustomUserResponse>('/usuarios/', cleanPayload);
   return response.data;
 };
 
@@ -27,7 +30,9 @@ export const updateUser = async (
   id: number,
   payload: Partial<CreateUserPayload>
 ): Promise<CustomUserResponse> => {
-  const response = await axiosInstance.put<CustomUserResponse>(`/usuarios/${id}`, payload);
+  // Ensure we only send fields defined in Partial<CreateUserPayload>
+  const cleanPayload = { ...payload };
+  const response = await axiosInstance.put<CustomUserResponse>(`/usuarios/${id}/`, cleanPayload);
   return response.data;
 };
 

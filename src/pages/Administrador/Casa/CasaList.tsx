@@ -1,26 +1,21 @@
 import { useEffect, useState } from 'react';
-import { casaApi } from '../../../api/api-casa';
-import type { Casa } from '../../../types/type-casa';
+import { casaApiV1 } from '../../../api/api-casa-v1';
+import type { CasaV1 } from '../../../types/type-casa-v1';
 import { useNavigate } from 'react-router-dom';
-import AsignarPropietarioModal from './AsignarPropietarioModal';
 
-export default function CasaList() {
+export default function CasaListV1() {
   const navigate = useNavigate();
-  const [casas, setCasas] = useState<Casa[]>([]);
+  const [casas, setCasas] = useState<CasaV1[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Estado del modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [casaToAssign, setCasaToAssign] = useState<Casa | null>(null);
 
   useEffect(() => {
     const fetchCasas = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await casaApi.getAll();
+        const data = await casaApiV1.getAll();
         setCasas(data);
       } catch (err: any) {
         setError('No se pudieron cargar las casas.');
@@ -34,35 +29,15 @@ export default function CasaList() {
 
   const filteredCasas = casas.filter(
     (casa) =>
-      casa.numero_casa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (casa.propietario &&
-        `${casa.propietario.usuario.nombre} ${casa.propietario.usuario.apellido_paterno}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()))
+      casa.numero_casa.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleOpenAssignModal = (casa: Casa) => {
-    setCasaToAssign(casa);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setCasaToAssign(null);
-  };
-
-  const handleAssignSuccess = (updatedCasa: Casa) => {
-    setCasas(prev =>
-      prev.map(c => (c.id === updatedCasa.id ? updatedCasa : c))
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b px-4 py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Casas</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Casas (v1)</h1>
           <button
             onClick={() => navigate('/administrador/casas/nueva')}
             className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
@@ -77,7 +52,7 @@ export default function CasaList() {
         <div className="mb-6">
           <input
             type="text"
-            placeholder="Buscar por número de casa o propietario..."
+            placeholder="Buscar por número de casa..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
@@ -110,13 +85,8 @@ export default function CasaList() {
                   <p className="text-sm text-gray-600">
                     {casa.tipo_de_unidad.charAt(0).toUpperCase() + casa.tipo_de_unidad.slice(1)} • {casa.area} m²
                   </p>
-                  {casa.propietario ? (
-                    <p className="text-sm text-green-600 mt-1">
-                      Propietario: {casa.propietario.usuario.nombre} {casa.propietario.usuario.apellido_paterno}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-400 mt-1">Sin propietario asignado</p>
-                  )}
+                  {/* Se eliminó la lógica de propietario */}
+                  <p className="text-sm text-gray-400 mt-1">Estado: {casa.estado_ocupacion.charAt(0).toUpperCase() + casa.estado_ocupacion.slice(1)}</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -128,23 +98,13 @@ export default function CasaList() {
                     Editar
                   </button>
 
-                  {/* Asignar/Desasignar Propietario */}
-                  <button
-                    onClick={() => handleOpenAssignModal(casa)}
-                    className={`px-3 py-1 text-sm rounded transition-colors ${
-                      casa.propietario
-                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
-                    {casa.propietario ? 'Desasignar' : 'Asignar Propietario'}
-                  </button>
+                  {/* El botón de asignar/desasignar propietario se ha eliminado por completo */}
 
                   {/* Eliminar */}
                   <button
                     onClick={() => {
                       if (window.confirm(`¿Eliminar la casa ${casa.numero_casa}?`)) {
-                        casaApi.delete(casa.id)
+                        casaApiV1.delete(casa.id)
                           .then(() => {
                             setCasas(casas.filter(c => c.id !== casa.id));
                           })
@@ -166,15 +126,6 @@ export default function CasaList() {
           </div>
         )}
       </div>
-
-      {/* Modal de asignación */}
-      {isModalOpen && casaToAssign && (
-        <AsignarPropietarioModal
-          casa={casaToAssign}
-          onAssignSuccess={handleAssignSuccess}
-          onClose={handleCloseModal}
-        />
-      )}
     </div>
   );
 }

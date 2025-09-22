@@ -1,6 +1,5 @@
 // src/types/user.ts
 
-import type { Rol } from './index';
 
 export interface CustomUserResponse {
   id: number;
@@ -12,23 +11,13 @@ export interface CustomUserResponse {
   sexo: 'M' | 'F' | null;
   direccion: string | null;
   fecha_nacimiento: string | null;
-  rol: Rol; 
-  fecha_inicio_contrato?: string | null;
-  fecha_fin_contrato?: string | null;
-  fecha_adquisicion?: string | null;
-  tipo_personal?: string | null;
-  fecha_ingreso?: string | null;
-  salario?: string | null;
-  // 👇 NUEVOS CAMPOS PARA ADMINISTRADOR
-  fecha_certificacion?: string | null;
-  empresa?: string | null;
-  numero_licencia?: string | null;
-
+  rol: number; // <-- sigue siendo el ID del rol (para consistencia con el payload de escritura)
+  rol_nombre: string | null; // <-- ¡Nuevo campo! Solo para lectura
 }
 
 export interface CreateUserPayload {
   username: string;
-  password: string;
+  password?: string; // Make password optional for updates
   email?: string | null;
   nombre: string;
   apellido_paterno: string;
@@ -36,23 +25,12 @@ export interface CreateUserPayload {
   sexo?: 'M' | 'F' | null;
   direccion?: string | null;
   fecha_nacimiento?: string | null;
-  //rol: number; // Sigue siendo ID (para enviar al backend)
-  rol_nombre: string;
-  // Campos dinámicos
-  fecha_inicio_contrato?: string | null;
-  fecha_fin_contrato?: string | null;
-  fecha_adquisicion?: string | null;
-  tipo_personal?: string | null;
-  fecha_ingreso?: string | null;
-  salario?: string | null;
-  // 👇 NUEVOS CAMPOS PARA ADMINISTRADOR
-  fecha_certificacion?: string | null;
-  empresa?: string | null;
-  numero_licencia?: string | null;
-
+  rol: number; // Solo el ID del rol
 }
 
+// UserFormState for client-side form management (includes confirm password)
 export interface UserFormState extends Omit<CreateUserPayload, 'password' | 'rol'> {
-  confirm: string;
-  rol: number | null;
+  password?: string; // Optional for edit, required for create
+  confirm?: string; // Used for client-side password confirmation
+  rol: number | null; // Can be null if not selected yet
 }

@@ -39,12 +39,11 @@ const Login: React.FC = () => {
         case 'Administrador':
           navigate('/administrador', { replace: true });
           break;
-        case 'Personal':
-          navigate('/personal', { replace: true });
+        case 'Propietario':
+          navigate('/propietario', { replace: true });
           break;
-        case 'Cliente':
-        case 'Inquilino':
-          navigate('/cliente', { replace: true });
+          case 'Inquilino':
+          navigate('/inquilino', { replace: true });
           break;
         default:
           navigate('/unauthorized', { replace: true });

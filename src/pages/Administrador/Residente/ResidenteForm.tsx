@@ -56,7 +56,7 @@ const ResidenteForm: React.FC = () => {
             setLoading(true);
             try {
                 const [usuariosData, casasData] = await Promise.all([
-                    axiosInstance.get<Usuario[]>('/usuarios/?rol__nombre=Ninguno'), // 👈 SIN /api/
+                    axiosInstance.get<Usuario[]>('/usuarios/'), // 👈 SIN /api/
                     axiosInstance.get<Casa[]>('/casas/'), // 👈 SIN /api/
                 ]);
 

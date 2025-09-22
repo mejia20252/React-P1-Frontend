@@ -2,7 +2,7 @@
 import axios from '../app/axiosInstance'
 import type {
   Bitacora
-} from '../types/type-bitacora'
+} from '../types/type-bitacora1'
 
 export interface BitacoraDto {
   login: string
