@@ -12,8 +12,8 @@ const PagoExitoso: React.FC<PagoExitosoProps> = ({ redirectPath = '/inquilino/cu
     const navigate = useNavigate();
 
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const sessionId = params.get('session_id');
+        //const params = new URLSearchParams(location.search);
+        //const sessionId = params.get('session_id');
 
         setTimeout(() => {
             navigate(redirectPath); // Usa la prop redirectPath

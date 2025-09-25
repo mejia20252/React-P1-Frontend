@@ -9,7 +9,7 @@ export const reservaCreateSchema = z.object({
   hora_inicio: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato de hora inválido (HH:mm)"),
   hora_fin: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato de hora inválido (HH:mm)"),
   estado: z.enum(['pendiente', 'confirmada', 'cancelada']).optional(),
-  pagada: z.boolean().optional(),
+  pagada: z.boolean().default(false),
 }).refine(
   (data) => {
     const start = new Date(`1970-01-01T${data.hora_inicio}:00`);

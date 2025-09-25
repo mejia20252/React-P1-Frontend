@@ -1,10 +1,10 @@
 // src/pages/Inquilino/Telefono/TelefonoList.tsx // Changed path in comment
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchTelefonos, deleteTelefono } from '../../../api/telefono';
+import { fetchTelefonos,  } from '../../../api/telefono'; //deleteTelefono
 import type { Telefono } from '../../../types/type-telefono';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import {  faEdit } from '@fortawesome/free-solid-svg-icons';
 
 const TelefonoList: React.FC = () => {
   const [telefonos, setTelefonos] = useState<Telefono[]>([]);
@@ -34,7 +34,7 @@ const TelefonoList: React.FC = () => {
   const handleEdit = (id: number) => {
     navigate(`/inquilino/telefonos/${id}/edit`); // Changed from /propietario to /inquilino
   };
-
+/*
   const handleDelete = async (id: number) => {
     try {
       await deleteTelefono(id);
@@ -44,18 +44,20 @@ const TelefonoList: React.FC = () => {
       // Optionally, set an error message for the user here too
     }
   };
-
+*/
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
         <h2 className="text-3xl font-bold text-gray-800">Teléfonos del Inquilino</h2> {/* Adjusted title */}
-        <button
-          onClick={() => navigate('/inquilino/telefonos/new')} // Changed from /propietario to /inquilino
-          className="flex items-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
-        >
-          <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Nuevo Teléfono
-        </button>
+        {/*
+<button
+  onClick={() => navigate('/inquilino/telefonos/new')} // Changed from /propietario to /inquilino
+  className="flex items-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
+>
+  <FontAwesomeIcon icon={faPlus} className="mr-2" />
+  Nuevo Teléfono
+</button>
+*/}
       </div>
 
       {loading ? (
@@ -90,6 +92,7 @@ const TelefonoList: React.FC = () => {
                       <FontAwesomeIcon icon={faEdit} className="mr-2 hidden sm:block" />
                       Editar
                     </button>
+                     {/* **
                     <button
                       onClick={() => handleDelete(telefono.id)}
                       className="flex items-center px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition duration-300"
@@ -97,7 +100,7 @@ const TelefonoList: React.FC = () => {
                     >
                       <FontAwesomeIcon icon={faTrashAlt} className="mr-2 hidden sm:block" />
                       Eliminar
-                    </button>
+                    </button> ** */}
                   </div>
                 </div>
               </li>

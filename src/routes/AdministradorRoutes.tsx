@@ -7,7 +7,6 @@ import RolesForm from '../pages/Administrador/Rol/RolForm';
 import Dashboard from '../pages/Administrador/Dashboard';
 import BitacoraList from '../pages/Administrador/Bitacora/BitacoraList';
 import BitacoraDetail from '../pages/Administrador/DetalleBitacora/DetalleBitacoraList';
-// Nuevas importaciones para Grupos
 import GrupoList from '../pages/Administrador/Grupo/GrupoList';
 import GrupoForm from '../pages/Administrador/Grupo/GrupoForm';
 import TelefonoForm from '../pages/Administrador/Telefono/TelefonoForm';
@@ -22,7 +21,7 @@ import CasaList from '../pages/Administrador/Casa/CasaList';
 
 import VehiculoForm from '../pages/Administrador/Vehiculo/VehiculoForm';
 import VehiculoList from '../pages/Administrador/Vehiculo/VehiculoList';
-// RESIDENTES (NUEVO)
+
 import ResidentesList from '../pages/Administrador/Residente/ResidenteList.tsx'
 import ResidenteForm from '../pages/Administrador/Residente/ResidenteForm.tsx';
 
@@ -62,9 +61,10 @@ import AsignacionTareaList from '../pages/Administrador/AsignacionTarea/Asignaci
 
 import ContratoArrendamientoForm from '../pages/Administrador/ContratosArrendamiento/ContratoArrendamientoForm';
 import ContratoArrendamientoList from '../pages/Administrador/ContratosArrendamiento/ContratoArrendamientoList';
+import ChangePasswordByUser from '../pages/Administrador/Usuarios/ChangePasswordByUser'; // <--- NEW IMPORT
 
-
-
+import IncidentesList from '../pages/Administrador/Incidente/IncidentesList.tsx'; // <--- NEW IMPORT
+import IncidenteForm from '../pages/Administrador/Incidente/IncidenteForm.tsx'; // <--- NEW IMPORT
 
 import ChangePassword from '../pages/CambiarContras';
 import Perfil from '../pages/Perfil.tsx';
@@ -74,6 +74,11 @@ const AdminRoutes: React.FC = () => (
             <Route index element={<Navigate to="dashboard" replace />} />
             {/* RUTA DEL DASHBOARD */}
             <Route path="dashboard" element={<Dashboard />} />
+
+            <Route path="incidentes" element={<IncidentesList />} />
+            <Route path="incidentes/nuevo" element={<IncidenteForm />} />
+            <Route path="incidentes/:id/editar" element={<IncidenteForm />} />
+
             <Route path="roles" element={<RolesList />} />
             <Route path="roles/new" element={<RolesForm />} />
             <Route path="roles/:id/edit" element={<RolesForm />} />
@@ -96,6 +101,7 @@ const AdminRoutes: React.FC = () => (
             <Route path="usuarios/:id" element={<UserDetail />} />
             <Route path="usuarios/new" element={<UserForms />} />
             <Route path="usuarios/:id/editar" element={<UserForms />} />
+            <Route path="usuarios/:id/cambiar-contrasena" element={<ChangePasswordByUser />} /> {/* <--- NEW ROUTE */}
 
             <Route path="casas" element={<CasaList />} />
             <Route path="casas/nueva" element={<CasaForm />} />

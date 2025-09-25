@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchBitacoras } from '../../../api/api-bitacora';
-import type { Bitacora } from '../../../types/type-bitacora1'; 
+import type { Bitacora } from '../../../types/type-bitacora1';
 import { toUiError } from '../../../api/error';
 
 const BitacoraList: React.FC = () => {
@@ -10,13 +10,14 @@ const BitacoraList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const loadBitacoras = async () => { 
+  const loadBitacoras = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await fetchBitacoras();
-      console.log('datae es ',data);
-      
+      console.log('datae es ', data);
+
+      // Ensure data is an array, if not, default to an empty array
       setEntries(Array.isArray(data) ? data : []);
     } catch (err) {
       const uiError = toUiError(err);
@@ -28,8 +29,7 @@ const BitacoraList: React.FC = () => {
 
   useEffect(() => {
     loadBitacoras();
-    // loadUsers(); // YA NO ES NECESARIO
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
@@ -50,7 +50,7 @@ const BitacoraList: React.FC = () => {
             <strong>Error:</strong> {error}
           </div>
           <button
-            onClick={loadBitacoras} // Usamos loadBitacoras
+            onClick={loadBitacoras} // Usamos loadBitacoras para reintentar
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
           >
             Reintentar
@@ -61,7 +61,8 @@ const BitacoraList: React.FC = () => {
       {/* Estado: Sin datos (solo si no hay error y no está cargando) */}
       {!loading && !error && entries.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 text-gray-700 p-4 rounded-lg mb-6 text-center">
-          <span aria-hidden="true">ℹ️</span> <strong>No hay registros de sesiones disponibles.</strong>
+          <span aria-hidden="true">ℹ️</span>{' '}
+          <strong>No hay registros de sesiones disponibles.</strong>
         </div>
       )}
 
@@ -71,22 +72,41 @@ const BitacoraList: React.FC = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">ID</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Usuario (Nombre)</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Usuario (Rol)</th> {/* Nuevo campo */}
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Login</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Logout</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">IP</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Dispositivo</th>
-                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">Acción</th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  ID
+                </th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  Usuario (Nombre)
+                </th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  Usuario (Rol)
+                </th>
+                {/* Removed the extra space here */}
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  Login
+                </th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  Logout
+                </th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  IP
+                </th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  Dispositivo
+                </th>
+                <th className="px-4 py-3 text-left border-b font-medium text-gray-700">
+                  Acción
+                </th>
               </tr>
             </thead>
             <tbody>
-              {entries.map(e => (
+              {entries.map((e) => (
                 <tr key={e.id} className="hover:bg-gray-50 transition">
                   <td className="px-4 py-3 border-b">{e.id}</td>
                   <td className="px-4 py-3 border-b">
-                    {e.usuario ? `${e.usuario.nombre} ${e.usuario.apellido_paterno}` : 'Desconocido'}
+                    {e.usuario
+                      ? `${e.usuario.nombre} ${e.usuario.apellido_paterno}`
+                      : 'Desconocido'}
                   </td>
                   <td className="px-4 py-3 border-b">
                     {e.usuario && e.usuario.rol ? e.usuario.rol.nombre : '—'}

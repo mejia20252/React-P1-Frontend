@@ -1,9 +1,9 @@
-// src/pages/Inquilino/Reserva/ReservaList.tsx (actualizado)
+// src/pages/Administrador/Reserva/ReservaList.tsx (actualizado)
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Importa useNavigate
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faDollarSign } from '@fortawesome/free-solid-svg-icons'; // Import faDollarSign
 import { reservaApi } from '../../../api/api-reserva';
 import { areaComunApi } from '../../../api/api-area-comun';
 import { residenteApi } from '../../../api/api-residente';
@@ -17,7 +17,6 @@ const ReservaList: React.FC = () => {
     const [residentes, setResidentes] = useState<Record<number, Residente>>({});
     const [loading, setLoading] = useState(true);
     const [topError, setTopError] = useState('');
-    const navigate = useNavigate(); // Inicializa useNavigate
 
     useEffect(() => {
         const fetchData = async () => {
@@ -31,6 +30,7 @@ const ReservaList: React.FC = () => {
 
                 setReservas(reservasData);
 
+                // Convertimos arrays en mapas por ID para acceso rápido
                 const areasMap = areasData.reduce((acc, area) => {
                     acc[area.id] = area;
                     return acc;
@@ -45,7 +45,7 @@ const ReservaList: React.FC = () => {
 
             } catch (error) {
                 console.error('Error al cargar reservas:', error);
-                setTopError('No se pudieron cargar las reservas. Verifica que las rutas de la API sean correctas.');
+                setTopError('No se pudieron cargar las reservas.');
             } finally {
                 setLoading(false);
             }
@@ -60,40 +60,26 @@ const ReservaList: React.FC = () => {
         try {
             await reservaApi.delete(id);
             setReservas(reservas.filter(r => r.id !== id));
-            alert('Reserva eliminada exitosamente.');
         } catch (error) {
-            console.error('Error al eliminar reserva:', error);
-            alert('No se pudo eliminar la reserva. Revisa si tienes permisos o si la ruta es correcta.');
+            alert('No se pudo eliminar la reserva.');
         }
     };
 
-    const getAreaNombre = (id: number) => areas[id]?.nombre || `Área ${id} (No encontrada)`;
+    // Helpers para mostrar nombres
+    const getAreaNombre = (id: number) => areas[id]?.nombre || `Área ${id}`;
     const getResidenteNombre = (id: number | null) => {
         if (id === null) return 'Sin residente';
         const residente = residentes[id];
-        return residente ? `Residente ${id} (Usuario ${residente.usuario})` : `Residente ${id} (No encontrado)`;
-    };
-
-    const handleNavigate = (path: string) => {
-        try {
-            navigate(path);
-        } catch (error) {
-            console.error(`Error al navegar a ${path}:`, error);
-            setTopError(`No se encontró la ruta: ${path}. Asegúrate de que esté definida en tus rutas.`);
-        }
+        return residente ? `Residente ${id} (Usuario ${residente.usuario})` : `Residente ${id}`;
     };
 
     return (
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Mis Reservas de Áreas Comunes</h1>
+                <h1 className="text-2xl font-bold">Reservas de Áreas Comunes</h1>
                 <Link
                     to="/inquilino/reservas/nuevo"
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        handleNavigate("/inquilino/reservas/nuevo");
-                    }}
                 >
                     <FontAwesomeIcon icon={faPlus} className="mr-2" /> Nueva Reserva
                 </Link>
@@ -109,15 +95,8 @@ const ReservaList: React.FC = () => {
                 <p className="text-gray-600">Cargando reservas...</p>
             ) : reservas.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">No tienes reservas registradas.</p>
-                    <Link
-                        to="/inquilino/reservas/nuevo"
-                        className="text-blue-600 hover:text-blue-800 mt-4 block"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            handleNavigate("/inquilino/reservas/nuevo");
-                        }}
-                    >
+                    <p className="text-gray-500">No hay reservas registradas.</p>
+                    <Link to="/inquilino/reservas/nuevo" className="text-blue-600 hover:text-blue-800 mt-4 block">
                         Registrar una ahora
                     </Link>
                 </div>
@@ -131,7 +110,7 @@ const ReservaList: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th> {/* Nueva columna */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
@@ -159,30 +138,25 @@ const ReservaList: React.FC = () => {
                                             {reserva.estado}
                                         </span>
                                     </td>
+                                    {/* Columna de Pago - Lógica actualizada */}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         {reserva.pagada ? (
                                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Pagada</span>
                                         ) : (
-                                            <Link
-                                                to={`/inquilino/reservas/${reserva.id}/pagar`}
-                                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm transition flex items-center justify-center"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    handleNavigate(`/inquilino/reservas/${reserva.id}/pagar`);
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faDollarSign} className="mr-1" /> Pagar
-                                            </Link>
+                                            reserva.estado !== 'confirmada' && ( // Solo muestra el botón si no está confirmada
+                                                <Link
+                                                    to={`/inquilino/reservas/${reserva.id}/pagar`} // Redirige al componente de pago
+                                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm transition flex items-center justify-center"
+                                                >
+                                                    <FontAwesomeIcon icon={faDollarSign} className="mr-1" /> Pagar
+                                                </Link>
+                                            )
                                         )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <Link
                                             to={`/inquilino/reservas/${reserva.id}/editar`}
                                             className="text-blue-600 hover:text-blue-900 mr-4"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleNavigate(`/inquilino/reservas/${reserva.id}/editar`);
-                                            }}
                                         >
                                             <FontAwesomeIcon icon={faEdit} /> Editar
                                         </Link>

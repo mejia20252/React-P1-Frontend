@@ -8,8 +8,8 @@ const PagoExitoso: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const sessionId = params.get('session_id');
+        //const params = new URLSearchParams(location.search);
+        //const sessionId = params.get('session_id');
 
         setTimeout(() => {
             // CAMBIO AQUÍ: Redirige al inquilino a sus reservas

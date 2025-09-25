@@ -12,8 +12,10 @@ import { conceptoPagoApi } from '../../../api/api-concepto-pago';
 import type { Casa } from '../../../types/type-casa';
 import type { ConceptoPago } from '../../../types/type-concepto-pago';
 import type { EstadoCuota } from '../../../types/type-cuota';
+
 const CuotaList: React.FC = () => {
   const [cuotas, setCuotas] = useState<Cuota[]>([]);
+  // Mantener casas y conceptos para mapear IDs a nombres/números
   const [casas, setCasas] = useState<Record<number, Casa>>({});
   const [conceptos, setConceptos] = useState<Record<number, ConceptoPago>>({});
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,7 @@ const CuotaList: React.FC = () => {
 
         setCuotas(cuotasData);
 
+        // Crear mapas para acceso rápido por ID
         const casasMap = casasData.reduce((acc, casa) => {
           acc[casa.id] = casa;
           return acc;
@@ -44,8 +47,8 @@ const CuotaList: React.FC = () => {
         setConceptos(conceptosMap);
 
       } catch (error) {
-        console.error('Error al cargar cuotas:', error);
-        setTopError('No se pudieron cargar las cuotas.');
+        console.error('Error al cargar cuotas, casas o conceptos:', error);
+        setTopError('No se pudieron cargar las cuotas y sus datos relacionados.');
       } finally {
         setLoading(false);
       }
@@ -121,42 +124,46 @@ const CuotaList: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {cuotas.map((cuota) => (
-                <tr key={cuota.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {cuota.concepto_nombre || `ID: ${cuota.concepto}`}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {cuota.casa_numero || `ID: ${cuota.casa}`}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    Bs {parseFloat(cuota.monto).toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(cuota.periodo).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(cuota.fecha_vencimiento).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {getEstadoBadge(cuota.estado)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link
-                      to={`/administrador/cuotas/${cuota.id}/editar`}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      <FontAwesomeIcon icon={faEdit} /> Editar
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(cuota.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <FontAwesomeIcon icon={faTrash} /> Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {cuotas.map((cuota) => {
+                const concepto = conceptos[cuota.concepto]; // Busca el concepto por ID
+                const casa = casas[cuota.casa]; // Busca la casa por ID
+                return (
+                  <tr key={cuota.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {concepto ? concepto.nombre : `ID: ${cuota.concepto}`}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {casa ? casa.numero_casa : `ID: ${cuota.casa}`}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Bs {parseFloat(cuota.monto).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(cuota.periodo).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(cuota.fecha_vencimiento).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {getEstadoBadge(cuota.estado)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <Link
+                        to={`/administrador/cuotas/${cuota.id}/editar`}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        <FontAwesomeIcon icon={faEdit} /> Editar
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(cuota.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <FontAwesomeIcon icon={faTrash} /> Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

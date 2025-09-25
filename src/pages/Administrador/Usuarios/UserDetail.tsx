@@ -103,10 +103,17 @@ const UserDetail: React.FC = () => {
             </div>
 
             {/* Acciones */}
-            <div className="mt-10 pt-6 border-t border-gray-200 flex justify-end">
+            <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
+              <button
+                // UPDATED PATH: now points to the new component
+                onClick={() => navigate(`/administrador/usuarios/${id}/cambiar-contrasena`)}
+                className="w-full sm:w-auto text-blue-600 hover:text-blue-800 border border-blue-600 hover:border-blue-800 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                Cambiar Contraseña
+              </button>
               <button
                 onClick={() => navigate(`/administrador/usuarios/${id}/editar`)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200"
               >
                 Editar Usuario
               </button>

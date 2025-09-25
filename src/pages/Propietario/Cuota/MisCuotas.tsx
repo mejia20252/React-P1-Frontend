@@ -79,8 +79,8 @@ const MisCuotas: React.FC = () => {
                 {
                     tipo_objeto: 'cuota',
                     objeto_id: cuotaId,
-                    success_url: window.location.origin + '/pago-exitoso', 
-                    cancel_url: window.location.origin + '/pago-cancelado',
+                    success_url: window.location.origin + '/propietario/cuota-pago-exitoso', 
+                    cancel_url: window.location.origin + '/propietario/cuota-pago-cancelado',
                 }
             );
 

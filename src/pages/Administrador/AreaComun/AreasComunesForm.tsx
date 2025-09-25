@@ -1,4 +1,3 @@
-// src/pages/Administrador/AreaComun/AreasComunesForm.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -7,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { areaComunCreateSchema, type AreaComunFormData } from '../../../schemas/schema-area-comun'; // ✅ Importa el tipo desde aquí
+import { areaComunCreateSchema, type AreaComunFormData } from '../../../schemas/schema-area-comun';
 import { toUiError } from '../../../api/error';
 import { areaComunApi } from '../../../api/api-area-comun';
 
@@ -24,17 +23,21 @@ const AreasComunesForm: React.FC = () => {
     register,
     handleSubmit,
     setValue,
+    watch, // Watch for changes in 'es_de_pago'
     formState: { isSubmitting },
   } = useForm<AreaComunFormData>({
     resolver: zodResolver(areaComunCreateSchema) as any,
     defaultValues: {
       nombre: '',
-      descripcion: '', // ✅ string vacío, coincide con transform
+      descripcion: '',
+      es_de_pago: false, // ✅ Nuevo campo
       costo_alquiler: '0.00',
       capacidad: 1,
       estado: 'disponible',
     },
   });
+
+  const esDePago = watch('es_de_pago'); // Watch the value of es_de_pago
 
   // Cargar datos si es edición
   useEffect(() => {
@@ -43,7 +46,8 @@ const AreasComunesForm: React.FC = () => {
       areaComunApi.getById(Number(id))
         .then((area) => {
           setValue('nombre', area.nombre);
-          setValue('descripcion', area.descripcion || ''); // ✅ Siempre string
+          setValue('descripcion', area.descripcion || '');
+          setValue('es_de_pago', area.es_de_pago); // ✅ Cargar valor
           setValue('costo_alquiler', area.costo_alquiler);
           setValue('capacidad', area.capacidad);
           setValue('estado', area.estado);
@@ -61,6 +65,11 @@ const AreasComunesForm: React.FC = () => {
     setFormErrors({});
 
     try {
+      // Si es_de_pago es false, asegúrate de que costo_alquiler sea "0.00"
+      if (!data.es_de_pago) {
+        data.costo_alquiler = '0.00';
+      }
+
       if (isEdit && id) {
         await areaComunApi.update(Number(id), data);
       } else {
@@ -145,24 +154,39 @@ const AreasComunesForm: React.FC = () => {
             ))}
           </div>
 
-          {/* Costo de alquiler */}
-          <div>
-            <label htmlFor="costo_alquiler" className="block text-sm font-medium text-gray-700 mb-1">
-              Costo de Alquiler (USD) *
-            </label>
+          {/* Es de pago */}
+          <div className="flex items-center">
             <input
-              type="text"
-              id="costo_alquiler"
-              {...register('costo_alquiler')}
-              placeholder="0.00"
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                formErrors.costo_alquiler ? 'border-red-500' : 'border-gray-300'
-              }`}
+              type="checkbox"
+              id="es_de_pago"
+              {...register('es_de_pago')}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            {formErrors.costo_alquiler?.map((m, i) => (
-              <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
-            ))}
+            <label htmlFor="es_de_pago" className="ml-2 block text-sm font-medium text-gray-700">
+              ¿Esta área tiene un costo de alquiler?
+            </label>
           </div>
+
+          {/* Costo de alquiler (condicionalmente visible) */}
+          {esDePago && (
+            <div>
+              <label htmlFor="costo_alquiler" className="block text-sm font-medium text-gray-700 mb-1">
+                Costo de Alquiler (USD) *
+              </label>
+              <input
+                type="text"
+                id="costo_alquiler"
+                {...register('costo_alquiler')}
+                placeholder="0.00"
+                className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                  formErrors.costo_alquiler ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {formErrors.costo_alquiler?.map((m, i) => (
+                <p key={i} className="mt-1 text-sm text-red-600">{m}</p>
+              ))}
+            </div>
+          )}
 
           {/* Capacidad */}
           <div>

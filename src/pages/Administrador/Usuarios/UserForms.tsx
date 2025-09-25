@@ -176,7 +176,7 @@ const UserForm: React.FC = () => {
                 {loading ? (
                     <div className="text-center py-12 text-gray-500">Cargando formulario...</div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8" noValidate>
                         {/* Datos Personales */}
                         <div className="mb-8">
                             <h2 className="text-xl font-semibold text-gray-900 mb-6">Datos Personales</h2>
@@ -220,7 +220,7 @@ const UserForm: React.FC = () => {
                                         name="nombre"
                                         value={form.nombre}
                                         onChange={handleChange}
-                                        required
+                                        
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.nombre ? 'border-red-500' : 'border-gray-300'}`}
                                     />
                                     {formErrors.nombre?.map((m, i) => (
@@ -236,7 +236,7 @@ const UserForm: React.FC = () => {
                                         name="apellido_paterno"
                                         value={form.apellido_paterno}
                                         onChange={handleChange}
-                                        required
+                                        
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.apellido_paterno ? 'border-red-500' : 'border-gray-300'}`}
                                     />
                                     {formErrors.apellido_paterno?.map((m, i) => (
@@ -252,7 +252,7 @@ const UserForm: React.FC = () => {
                                         name="apellido_materno"
                                         value={form.apellido_materno}
                                         onChange={handleChange}
-                                        required
+                                        
                                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${formErrors.apellido_materno ? 'border-red-500' : 'border-gray-300'}`}
                                     />
                                     {formErrors.apellido_materno?.map((m, i) => (
@@ -320,7 +320,6 @@ const UserForm: React.FC = () => {
                                 name="password"
                                 value={form.password}
                                 onChange={handleChange}
-                                required={!isEditing}
                                 placeholder={isEditing ? 'Dejar en blanco para no cambiar' : 'Ingrese su contraseña'}
                                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${formErrors.password ? 'border-red-500' : 'border-gray-300'}`}
                             />
@@ -356,7 +355,6 @@ const UserForm: React.FC = () => {
                                 name="confirm"
                                 value={form.confirm}
                                 onChange={handleChange}
-                                required={!isEditing}
                                 placeholder={isEditing ? 'Dejar en blanco para no cambiar' : 'Confirme su contraseña'}
                                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 ${formErrors.confirm ? 'border-red-500' : 'border-gray-300'}`}
                             />

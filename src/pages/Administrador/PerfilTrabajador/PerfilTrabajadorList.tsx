@@ -6,7 +6,7 @@ import { faPlus, faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-toastify';
 import { toUiError } from '../../../api/error';
 
-// Definición de tipos para PerfilTrabajador dentro de este archivo
+// Definición de tipos para Perf  ilTrabajador dentro de este archivo
 interface PerfilTrabajador {
   id: number;
   usuario: number;
@@ -53,7 +53,7 @@ const PerfilTrabajadorList: React.FC = () => {
   }, []);
 
   const handleEdit = (id: number) => {
-    navigate(`/perfiltrabajador/${id}/editar`);
+    navigate(`/administrador/perfiltrabajador/${id}/editar`);
   };
 
   const handleDelete = async (id: number) => {

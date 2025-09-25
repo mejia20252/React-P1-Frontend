@@ -3,7 +3,7 @@ import React from 'react';
 
 const Dashboard: React.FC = () => (
   <div>
-    <h1>Admin Dashboard</h1>
+    <h1>Bienvenido Propietario</h1>
     {/* … */}
   </div>
 );

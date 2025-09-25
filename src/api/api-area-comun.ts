@@ -1,6 +1,5 @@
-// src/api/api-area-comun.ts
 import axiosInstance from '../app/axiosInstance';
-import type { AreaComun, AreaComunCreateRequest } from '../types/type-area-comun';
+import type { AreaComun, AreaComunCreateRequest } from '../types/type-area-comun'; // Adjusted import
 
 const API_BASE = '/areas-comunes/';
 

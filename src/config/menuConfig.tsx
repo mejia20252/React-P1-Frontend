@@ -2,9 +2,10 @@
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faHome,faCreditCard, faUsers, faCogs, faBoxOpen,faPhone,
    faShoppingCart, faUserShield,faMoneyBillWave,faCalendarCheck,
-   faEnvelopeOpenText,faClipboardList,
+   faEnvelopeOpenText,faClipboardList,faClipboardCheck ,
+         faTools ,
     faBuilding, faPaw, faCar,faTreeCity ,faBullhorn,faSignOutAlt,faUser,faBell,
-    faGear,faShieldAlt,
+    faGear,faShieldAlt,faCalendarAlt,faExclamationTriangle,
     faTasks} from '@fortawesome/free-solid-svg-icons';
 
 export interface MenuItem {
@@ -29,7 +30,7 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
     },
     
     {
-      title: 'Módulo Usuarios',
+      title: 'Módulo uu',
       icon: faUsers,
       subItems: [
         { to: '/administrador/usuarios', title: 'Usuarios', icon: faUsers },
@@ -39,6 +40,8 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
         { to: '/administrador/telefonos', title: 'Telefonos', icon: faPhone  },
         { to: '/administrador/perfiltrabajador', title: 'Perfiles Trabajadores', icon: faUsers  },
         { to: '/administrador/asignacionestarea', title: 'Asignar Tareas', icon: faTasks  },
+        { to: '/administrador/incidentes', title: 'Notificaion', icon: faBell  },
+
       ],
     },
     {
@@ -89,8 +92,7 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
       icon: faMoneyBillWave,
       subItems: [
         { to: '/propietario/cuotas', title: 'Mis Cuotas', icon: faCreditCard },
-        { to: '/propietario/historial-pagos', title: 'Historial de Pagos', icon: faClipboardList },
-        // { to: '/propietario/pagar-cuotas', title: 'Pagar Cuotas', icon: faMoneyBillWave }, // Integrar en 'Mis Cuotas' o una vista aparte
+        { to: '/propietario/pagos', title: 'Historial de Pagos', icon: faClipboardList },
       ],
     },
     {
@@ -115,7 +117,6 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
       subItems: [
         { to: '/propietario/vehiculos', title: 'Mis Vehículos', icon: faCar },
         { to: '/propietario/mascotas', title: 'Mis Mascotas', icon: faPaw },
-        { to: '/propietario/historial-accesos', title: 'Historial de Accesos', icon: faBoxOpen }, // Asumimos un acceso limitado a su info
       ],
     },
   ],
@@ -126,7 +127,7 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
       icon: faUser,
       subItems: [
         { to: '/inquilino/perfil', title: 'Datos Personales', icon: faUser },
-        { to: '/inquilino/mi-residencia', title: 'Mi Residencia', icon: faBuilding }, // Para ver detalles de la casa que habita
+        { to: '/inquilino/casas', title: 'Ver Casa', icon: faBuilding }, // Para ver detalles de la casa que habita
         { to: '/inquilino/telefonos', title: 'Mis Teléfonos', icon: faPhone },
         { to: '/inquilino/cambiar-contra', title: 'Cambiar Contraseña', icon: faGear },
         { title: 'Cerrar sesión', icon: faSignOutAlt, action: 'signout' },
@@ -137,7 +138,7 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
       icon: faMoneyBillWave,
       subItems: [
         { to: '/inquilino/cuotas', title: 'Mis Cuotas y Pagos', icon: faCreditCard }, // Para consulta y pago
-        { to: '/inquilino/historial-pagos', title: 'Historial de Pagos', icon: faClipboardList },
+        { to: '/inquilino/pagos', title: 'Historial de Pagos', icon: faClipboardList },
       ],
     },
     {
@@ -162,10 +163,74 @@ export const menuItemsByRole: Record<string, MenuItem[]> = {
       subItems: [
         { to: '/inquilino/vehiculos', title: 'Mis Vehículos', icon: faCar },
         { to: '/inquilino/mascotas', title: 'Mis Mascotas', icon: faPaw },
-        { to: '/inquilino/historial-accesos', title: 'Historial de Accesos', icon: faBoxOpen }, // Asumimos un acceso limitado a su info
+      ],
+    },
+  ],
+   Seguridad: [
+    { to: '/seguridad/dashboard', title: 'DASHBOARD', icon: faHome },
+    {
+      title: 'Mi Perfil',
+      icon: faUser,
+      subItems: [
+        { to: '/seguridad/perfil', title: 'Datos Personales', icon: faUser },
+        { to: '/seguridad/cambiar-contra', title: 'Cambiar Contraseña', icon: faGear },
+        { title: 'Cerrar sesión', icon: faSignOutAlt, action: 'signout' },
+      ],
+    },
+    {
+      title: 'Control de Acceso',
+      icon: faShieldAlt,
+      subItems: [
+        { to: '/seguridad/registro-accesos', title: 'Registrar Acceso', icon: faBoxOpen },
+        { to: '/seguridad/historial-accesos', title: 'Historial de Acceso', icon: faClipboardList },
+        { to: '/seguridad/gestion-residentes', title: 'Gestión de Residentes', icon: faUsers },
+        { to: '/seguridad/gestion-vehiculos', title: 'Gestión de Vehículos', icon: faCar },
+      ],
+    },
+    {
+      title: 'Incidentes y Novedades',
+      icon: faExclamationTriangle,
+      subItems: [
+        { to: '/seguridad/reportar-incidente', title: 'Reportar Incidente', icon: faExclamationTriangle },
+        { to: '/seguridad/ver-incidentes', title: 'Ver Incidentes', icon: faBell },
+        { to: '/seguridad/comunicados', title: 'Comunicados Internos', icon: faBullhorn },
+      ],
+    },
+  ],
+  Trabajador: [
+    { to: '/trabajador/dashboard', title: 'DASHBOARD', icon: faHome },
+    {
+      title: 'Mi Perfil',
+      icon: faUser,
+      subItems: [
+        { to: '/trabajador/perfil', title: 'Datos Personales', icon: faUser },
+        { to: '/trabajador/cambiar-contra', title: 'Cambiar Contraseña', icon: faGear },
+        { title: 'Cerrar sesión', icon: faSignOutAlt, action: 'signout' },
+      ],
+    },
+    {
+      title: 'Mis Tareas',
+      icon: faTasks,
+      subItems: [
+        { to: '/trabajador/tareas-asignadas', title: 'Tareas Asignadas', icon: faClipboardCheck },
+        { to: '/trabajador/reporte-tareas', title: 'Reporte de Tareas', icon: faTools },
+      ],
+    },
+    {
+      title: 'Horarios y Calendario',
+      icon: faCalendarAlt,
+      subItems: [
+        { to: '/trabajador/mi-horario', title: 'Mi Horario', icon: faCalendarAlt },
+        { to: '/trabajador/solicitud-vacaciones', title: 'Solicitar Vacaciones', icon: faCalendarCheck },
+      ],
+    },
+    {
+      title: 'Comunicación',
+      icon: faBullhorn,
+      subItems: [
+        { to: '/trabajador/comunicados', title: 'Avisos y Comunicados', icon: faEnvelopeOpenText },
       ],
     },
   ],
  
-  // ... (other roles)
 };

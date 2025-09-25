@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
-const PagoCancelado: React.FC = () => {
+const CuotaCancelado: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setTimeout(() => {
-            navigate('propietario/cuotas'); // Redirige al usuario de vuelta a sus cuotas
-        }, 5000); // Redirige después de 5 segundos
+        const timer = setTimeout(() => {
+            navigate('/propietario/cuotas');
+        }, 5000); // Espera 2 segundos antes de redirigir
+
+        return () => clearTimeout(timer); // Limpia el timer si el componente se desmonta
     }, [navigate]);
 
     return (
@@ -29,4 +31,4 @@ const PagoCancelado: React.FC = () => {
     );
 };
 
-export default PagoCancelado;
+export default CuotaCancelado;

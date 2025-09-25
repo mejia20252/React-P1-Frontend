@@ -2,22 +2,21 @@ import 'react-toastify/dist/ReactToastify.css'
 
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
-import NotFound from './pages/NotFound';
-import Forbidden from './pages/Forbidden';
+//import NotFound from './pages/NotFound';
+//import Forbidden from './pages/Forbidden';
 import Perfil from './pages/Perfil';
 import { useAuth } from './contexts/AuthContext';
 import AdministradorRoutes from './routes/AdministradorRoutes';
 import PropietarioRoutes from './routes/PropietarioRoutes';
 import InquilinoRoutes from './routes/InquilinoRoutes';
+import SeguridadRoutes from './routes/SeguridadRoutes';
+import TrabajadorRoutes from './routes/TrabajadorRoutes';
 
 import Sidebar from './components/Layout/Sidebar';
 import Welcome from './pages/welcom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import UnauthorizedAccess from './pages/UnauthorizedAccess';
-import PagoExitoso from './pages/Propietario/Cuota/PagoExitoso.tsx';
-import PagoCancelado from './pages/Propietario/Cuota/PagoCancelado.tsx';
-// Layout protegido con Sidebar único
 const LayoutWithSidebar = () => {
   const { user } = useAuth();
   if (!user) return null; // o un spinner
@@ -70,20 +69,34 @@ function App() {
               </ProtectedRoute>
             }
           />
-
         </Route>
-
-
-
-        {/* errores */}
-        <Route path="/pago-exitoso" element={<PagoExitoso />} />
-        <Route path="/pago-cancelado" element={<PagoCancelado />} />
-        <Route path="/forbidden" element={<Forbidden />} />
+         <Route element={<ProtectedRoute><LayoutWithSidebar /></ProtectedRoute>}>
+          <Route
+            path="/seguridad/*"
+            element={
+              <ProtectedRoute requiredRoles={['Seguridad']}>
+                <SeguridadRoutes />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+         <Route element={<ProtectedRoute><LayoutWithSidebar /></ProtectedRoute>}>
+          <Route
+            path="/trabajador/*"
+            element={
+              <ProtectedRoute requiredRoles={['Trabajador']}>
+                <TrabajadorRoutes />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+        
+       
+       {/** <Route path="/forbidden" element={<Forbidden />} />{/**
+       {/** <Route path="*" element={<NotFound />} />**/}
         <Route
           path='/perfil' element={<Perfil />} />
-        <Route path="*" element={<NotFound />} />
       </Routes>
-
     </BrowserRouter>
   );
 }

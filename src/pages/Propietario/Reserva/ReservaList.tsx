@@ -1,9 +1,11 @@
-// src/pages/Administrador/Reserva/ReservaList.tsx (actualizado)
+// src/pages/Administrador/Reserva/ReservaList.tsx
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faDollarSign } from '@fortawesome/free-solid-svg-icons'; // Import faDollarSign
+import { faPlus, faEdit, faTrash, faDollarSign, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { loadStripe } from '@stripe/stripe-js'; // Import loadStripe
+import api from '../../../app/axiosInstance'; // Import your axios instance
 import { reservaApi } from '../../../api/api-reserva';
 import { areaComunApi } from '../../../api/api-area-comun';
 import { residenteApi } from '../../../api/api-residente';
@@ -11,12 +13,15 @@ import type { Reserva } from '../../../types/type-reserva';
 import type { AreaComun } from '../../../types/type-area-comun';
 import type { Residente } from '../../../types/type-residente';
 
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+
 const ReservaList: React.FC = () => {
     const [reservas, setReservas] = useState<Reserva[]>([]);
     const [areas, setAreas] = useState<Record<number, AreaComun>>({});
     const [residentes, setResidentes] = useState<Record<number, Residente>>({});
     const [loading, setLoading] = useState(true);
     const [topError, setTopError] = useState('');
+    const [loadingPaymentId, setLoadingPaymentId] = useState<number | null>(null); // State for payment loading
 
     useEffect(() => {
         const fetchData = async () => {
@@ -65,6 +70,42 @@ const ReservaList: React.FC = () => {
         }
     };
 
+    const handlePagarReserva = async (reservaId: number) => {
+        setLoadingPaymentId(reservaId);
+        try {
+            const stripe = await stripePromise;
+            if (!stripe) {
+                console.error('Stripe.js no cargó correctamente.');
+                alert('Hubo un error al cargar Stripe. Intenta de nuevo.');
+                return;
+            }
+
+            const response = await api.post(
+                '/pagos/crear_sesion_stripe/',
+                {
+                    tipo_objeto: 'reserva',
+                    objeto_id: reservaId,
+                    success_url: window.location.origin + '/propietario/reserva-pago-exitoso', // Asegúrate que esta ruta exista
+                    cancel_url: window.location.origin + '/propietario/reserva-pago-cancelado', // Asegúrate que esta ruta exista
+                }
+            );
+
+            const sessionId = response.data.id;
+
+            const result = await stripe.redirectToCheckout({ sessionId });
+
+            if (result.error) {
+                console.error('Error al redirigir a Stripe Checkout:', result.error.message);
+                alert('Hubo un error al iniciar el pago: ' + result.error.message);
+            }
+        } catch (err: any) {
+            console.error('Error al procesar el pago de la reserva con Stripe:', err.response ? err.response.data : err.message);
+            alert('Error al procesar el pago de la reserva. Intenta de nuevo.');
+        } finally {
+            setLoadingPaymentId(null);
+        }
+    };
+
     // Helpers para mostrar nombres
     const getAreaNombre = (id: number) => areas[id]?.nombre || `Área ${id}`;
     const getResidenteNombre = (id: number | null) => {
@@ -110,7 +151,7 @@ const ReservaList: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th> {/* Nueva columna */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
@@ -143,12 +184,19 @@ const ReservaList: React.FC = () => {
                                         {reserva.pagada ? (
                                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Pagada</span>
                                         ) : (
-                                            <Link
-                                                to={`/propietario/reservas/${reserva.id}/pagar`} // Redirige al componente de pago
+                                            // Only show the pay button if the reservation is not yet paid
+                                            <button
+                                                onClick={() => handlePagarReserva(reserva.id)}
                                                 className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm transition flex items-center justify-center"
+                                                disabled={loadingPaymentId === reserva.id}
                                             >
-                                                <FontAwesomeIcon icon={faDollarSign} className="mr-1" /> Pagar
-                                            </Link>
+                                                {loadingPaymentId === reserva.id ? (
+                                                    <FontAwesomeIcon icon={faSpinner} spin className="mr-1" />
+                                                ) : (
+                                                    <FontAwesomeIcon icon={faDollarSign} className="mr-1" />
+                                                )}
+                                                {loadingPaymentId === reserva.id ? 'Procesando...' : 'Pagar'}
+                                            </button>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

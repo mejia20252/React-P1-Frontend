@@ -77,7 +77,7 @@ const PerfilTrabajadorForm: React.FC = () => {
     const fetchUsuarios = async () => {
       try {
         const [usersRes, adminsRes] = await Promise.all([
-          axiosInstance.get<ApiUsuario[]>('/usuarios/'),
+          axiosInstance.get<ApiUsuario[]>('/usuarios/?rol__nombre=Trabajador'),
           axiosInstance.get<ApiUsuario[]>('/usuarios/?rol__nombre=Administrador')
         ]);
         setUsuarios(usersRes.data.filter(u => u.nombre && u.apellido_paterno));

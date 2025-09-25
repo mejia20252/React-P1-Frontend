@@ -31,7 +31,7 @@ const GrupoForm: React.FC = () => {
     defaultValues: { name: '', permissions: [] },
   });
 
-  useEffect(() => {
+   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
@@ -52,7 +52,11 @@ const GrupoForm: React.FC = () => {
         setAvailablePermissions(allPermissions);
 
         if (groupData?.data) {
-          reset({ name: groupData.data.name });
+          // Reset both name and permissions for react-hook-form
+          reset({
+            name: groupData.data.name,
+            permissions: groupData.data.permissions, // <--- ADD THIS LINE
+          });
           setSelectedPermissions(groupData.data.permissions);
         }
       } catch (err) {
@@ -64,8 +68,7 @@ const GrupoForm: React.FC = () => {
     };
 
     loadData();
-  }, [id, isEdit, reset]);
-
+  }, [id, isEdit, reset]); // Make sure `reset` is in the dependency array
   const onSubmit = async (values: GroupFormState) => {
     setTopError('');
     setFormErrors({});

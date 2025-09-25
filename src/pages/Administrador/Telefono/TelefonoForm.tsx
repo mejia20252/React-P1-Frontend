@@ -1,16 +1,25 @@
-// src/pages/Administrador/Telefono/TelefonoForm.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toUiError } from '../../../api/error';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-// Importa las funciones de la API
 import { createTelefono, fetchTelefono, updateTelefono } from '../../../api/telefono'; 
 import { telefonoFormSchema, telefonoSchema, type TelefonoFormState } from '../../../schemas/telefono';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import  api  from '../../../app/axiosInstance'
 
-
+export interface UsuarioListItem {
+  id: number;
+  username: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+}
+export const fetchUsuarios = async (): Promise<UsuarioListItem[]> => {
+  const response = await api.get<UsuarioListItem[]>('/usuarios/');
+  return response.data;
+};
 const TelefonoForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = useMemo(() => Boolean(id), [id]);
@@ -18,6 +27,7 @@ const TelefonoForm: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [topError, setTopError] = useState('');
+  const [usuarios, setUsuarios] = useState<UsuarioListItem[]>([]); // Estado para la lista de usuarios
 
   const {
     register,
@@ -26,23 +36,37 @@ const TelefonoForm: React.FC = () => {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<TelefonoFormState>({
-    resolver: zodResolver(telefonoFormSchema), // Usa el esquema del formulario
+    resolver: zodResolver(telefonoFormSchema),
     mode: 'onSubmit',
     reValidateMode: 'onChange',
     defaultValues: { numero: '', tipo: '', usuario: '' },
   });
 
+  // Cargar lista de usuarios al inicio
+  useEffect(() => {
+    const loadUsuarios = async () => {
+      try {
+        const data = await fetchUsuarios();
+        setUsuarios(data);
+      } catch (err) {
+        console.error('Error al cargar usuarios:', err);
+        setTopError('No se pudieron cargar los usuarios.');
+      }
+    };
+    loadUsuarios();
+  }, []);
+
+  // Cargar datos del teléfono si es edición
   useEffect(() => {
     const loadTelefono = async () => {
       if (!isEdit || !id) return;
       setLoading(true);
       try {
-        // Usa la función de la API para obtener los datos
         const data = await fetchTelefono(Number(id));
         reset({
           numero: data?.numero ?? '',
           tipo: data?.tipo ?? '',
-          usuario: String(data?.usuario) ?? '', // Convertir el ID de usuario a string
+          usuario: String(data?.usuario) ?? '', // Convertir el ID de usuario a string para el select
         });
       } catch (err) {
         setTopError('No se pudo cargar el teléfono.');
@@ -56,17 +80,14 @@ const TelefonoForm: React.FC = () => {
   const onSubmit = async (values: TelefonoFormState) => {
     setTopError('');
     try {
-      // Validar los datos finales usando el esquema de la API antes de enviarlos
       const parsedValues = telefonoSchema.parse({
         ...values,
-        usuario: Number(values.usuario), // Convertir el ID de usuario a número
+        usuario: Number(values.usuario), // Convertir el ID de usuario a número para la API
       });
 
       if (isEdit && id) {
-        // Usar la función de la API de actualización
         await updateTelefono(Number(id), parsedValues);
       } else {
-        // Usar la función de la API de creación
         await createTelefono(parsedValues);
       }
       navigate('/administrador/telefonos');
@@ -153,20 +174,25 @@ const TelefonoForm: React.FC = () => {
               )}
             </div>
             
-            {/* Campo para el ID de usuario */}
+            {/* Campo para seleccionar el usuario */}
             <div>
               <label htmlFor="usuario" className="block text-sm font-medium text-gray-700 mb-1">
-                ID de Usuario
+                Usuario
               </label>
-              <input
+              <select
                 id="usuario"
-                type="text"
                 {...register('usuario')}
-                placeholder="ID del usuario asociado"
                 aria-invalid={!!errors.usuario}
                 aria-describedby={errors.usuario ? 'usuario-err' : undefined}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              />
+                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="">Selecciona un usuario</option>
+                {usuarios.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.username} ({user.nombre} {user.apellido_paterno})
+                  </option>
+                ))}
+              </select>
               {errors.usuario && (
                 <p id="usuario-err" className="mt-2 text-sm text-red-600">
                   {errors.usuario.message}

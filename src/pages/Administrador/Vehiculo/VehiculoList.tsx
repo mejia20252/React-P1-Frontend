@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { vehiculoApi } from '../../../api/api-vehiculo';
 import { casaApi } from '../../../api/api-casa';
 import type { Vehiculo } from '../../../types/type-vehiculo';
@@ -11,7 +11,7 @@ import { vehiculoApiAgigment } from '../../../api/api-vehiculo-asingment';
 export default function VehiculoList() {
   const navigate = useNavigate();
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
-  const [casas, setCasas] = useState<Casa[]>([]);
+  const [casas, setCasas] = useState<Casa[]>([]); // This will now be used
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export default function VehiculoList() {
           casaApi.getAll(),
         ]);
         setVehiculos(vehiculosData);
-        setCasas(casasData);
+        setCasas(casasData); // Data is fetched and set
       } catch (err: any) {
         setError('No se pudieron cargar los vehículos o casas.');
       } finally {
@@ -44,10 +44,8 @@ export default function VehiculoList() {
   const filteredVehiculos = vehiculos.filter(
     (vehiculo) =>
       vehiculo.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (vehiculo.dueno &&
-        `${vehiculo.dueno_nombre_completo}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()))
+      (vehiculo.dueno_nombre_completo && // Check if it exists before trying to access
+        vehiculo.dueno_nombre_completo.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAsignarCasa = async (vehiculoId: number) => {
@@ -193,6 +191,7 @@ export default function VehiculoList() {
       {isModalOpen && vehiculoIdToAssign !== null && (
         <AsignarCasaModal
           vehiculoId={vehiculoIdToAssign}
+          casas={casas} // Now passing the fetched 'casas' data
           onAssignSuccess={handleAssignSuccess}
           onClose={() => setIsModalOpen(false)}
         />

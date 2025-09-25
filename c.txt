@@ -42,6 +42,8 @@ npm install formik yup
 
 npm run dev
 
+npm run build
+
 git add .
 git commit -m "Primer commit"
 git push -u origin main

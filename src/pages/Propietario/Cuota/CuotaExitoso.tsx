@@ -3,22 +3,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 
-const PagoExitoso: React.FC = () => {
+const CuotaExitoso: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Puedes verificar el session_id aquí si lo necesitas para mostrar detalles
-        const params = new URLSearchParams(location.search);
-        const sessionId = params.get('session_id');
+        //const params = new URLSearchParams(location.search);
+       // const sessionId = params.get('session_id');
 
-        // Opcional: Podrías hacer una llamada a tu backend para verificar
-        // el estado del pago usando el sessionId para mayor seguridad.
-        // Pero el webhook ya se encarga de actualizar el estado en el backend.
+        const timer = setTimeout(() => {
+            navigate('/propietario/cuotas');
+        }, 5000); // Espera 2 segundos antes de redirigir
 
-        setTimeout(() => {
-            navigate('/propietario/cuotas'); // Redirige al usuario de vuelta a sus cuotas
-        }, 5000); // Redirige después de 5 segundos
+        return () => clearTimeout(timer); // Limpia el timer si el componente se desmonta
     }, [location, navigate]);
 
     return (
@@ -37,4 +34,4 @@ const PagoExitoso: React.FC = () => {
     );
 };
 
-export default PagoExitoso;
+export default CuotaExitoso;

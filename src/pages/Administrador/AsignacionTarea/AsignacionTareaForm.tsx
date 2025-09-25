@@ -27,11 +27,13 @@ interface ApiAsignacionTarea {
     id: number | string;
     tarea: number;
     trabajador: number;
-    asignado_por: number | null;
+    asignado_por: number | null; // ID del usuario que asignó
     fecha_asignacion: string;
     fecha_completado: string | null;
     estado_asignacion: 'activa' | 'completada' | 'cancelada' | 'reasignada';
     observaciones: string | null;
+    // Agrega estos campos para la visualización, ya que el serializer los devuelve
+    asignado_por_nombre_completo?: string;
 }
 // Tipo para el estado del formulario
 interface FormInput {
@@ -58,6 +60,7 @@ const AsignacionTareaForm: React.FC = () => {
     const [errors, setErrors] = useState<FormErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
+    const [asignadoPorNombre, setAsignadoPorNombre] = useState<string | null>(null);
     const [tareas, setTareas] = useState<ApiTareaMantenimiento[]>([]);
     const [trabajadores, setTrabajadores] = useState<ApiPerfilTrabajador[]>([]);
     const [usuariosAdmin, setUsuariosAdmin] = useState<ApiUsuario[]>([]); // Para el campo 'asignado_por' (solo lectura en el form, lo gestiona el backend)
@@ -78,6 +81,7 @@ const AsignacionTareaForm: React.FC = () => {
                 toast.error('Error al cargar listas de tareas, trabajadores o administradores.');
             }
         };
+
         fetchDependencies();
     }, []);
     // Cargar datos en modo edición
@@ -86,13 +90,21 @@ const AsignacionTareaForm: React.FC = () => {
             if (!isEdit || !id) return;
             setLoading(true);
             try {
-                const { data } = await axiosInstance.get<ApiAsignacionTarea>(`/asignaciones-tarea/${ id } /`);
+                const { data } = await axiosInstance.get<ApiAsignacionTarea>(`/asignaciones-tarea/${id}/`);
                 setFormData({
                     tarea: data.tarea,
                     trabajador: data.trabajador,
                     estado_asignacion: data.estado_asignacion,
                     observaciones: data.observaciones || '',
                 });
+                // Establece el nombre del usuario que asignó para mostrarlo
+                if (data.asignado_por_nombre_completo) {
+                    setAsignadoPorNombre(data.asignado_por_nombre_completo);
+                } else {
+                    // Si no viene directamente, busca en usuariosAdmin si el ID existe
+                    const asignador = usuariosAdmin.find(u => u.id === data.asignado_por);
+                    setAsignadoPorNombre(asignador ? `${asignador.nombre} ${asignador.apellido_paterno}` : 'Desconocido');
+                }
                 setIsDirty(false); // Reset dirty state after loading
             } catch (err) {
                 setErrors({ topError: 'No se pudo cargar la asignación de tarea.' });
@@ -102,7 +114,7 @@ const AsignacionTareaForm: React.FC = () => {
             }
         };
         loadAsignacionTarea();
-    }, [id, isEdit]);
+    }, [id, isEdit, usuariosAdmin]);
     const handleChange = (e: ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -119,7 +131,7 @@ const AsignacionTareaForm: React.FC = () => {
     };
     const validateForm = (data: FormInput): FormErrors => {
         const newErrors: FormErrors = {};
-    
+
         if (data.tarea <= 0) {
             newErrors.tarea = 'Debe seleccionar una tarea.';
         }
@@ -133,7 +145,7 @@ const AsignacionTareaForm: React.FC = () => {
         e.preventDefault();
         setErrors({}); // Clear previous errors
         setIsSubmitting(true);
-  
+
         const validationErrors = validateForm(formData);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
@@ -193,7 +205,7 @@ const AsignacionTareaForm: React.FC = () => {
                         <FontAwesomeIcon icon={faTimes} size="lg" />
                     </button>
                 </div>
-           
+
                 {errors.topError && (
                     <div className="mb-4 p-3 rounded-md bg-red-100 border border-red-200 text-red-700 text-sm">
                         {errors.topError}
@@ -261,6 +273,22 @@ const AsignacionTareaForm: React.FC = () => {
                                 </p>
                             )}
                         </div>
+                        {isEdit && (
+                            <div>
+                                <label htmlFor="asignado_por" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Asignado Por
+                                </label>
+                                <input
+                                    id="asignado_por"
+                                    name="asignado_por"
+                                    type="text"
+                                    value={asignadoPorNombre || 'Cargando...'}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 cursor-not-allowed"
+                                    readOnly
+                                    aria-label="Usuario que asignó la tarea"
+                                />
+                            </div>
+                        )}
 
                         {/* Campo Estado de Asignación */}
                         <div>
@@ -322,8 +350,8 @@ const AsignacionTareaForm: React.FC = () => {
                                 type="submit"
                                 disabled={isSubmitting}
                                 className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 ${isSubmitting
-                                        ? 'bg-blue-400 cursor-not-allowed'
-                                        : 'bg-blue-600 hover:bg-blue-700'
+                                    ? 'bg-blue-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700'
                                     }`}
                             >
                                 {isSubmitting ? (

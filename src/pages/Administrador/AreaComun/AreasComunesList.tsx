@@ -1,10 +1,9 @@
-// src/pages/Administrador/AreaComun/AreasComunesList.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faDollarSign, faTimesCircle } from '@fortawesome/free-solid-svg-icons'; // Added faDollarSign and faTimesCircle
 import { areaComunApi } from '../../../api/api-area-comun';
 import type { AreaComun } from '../../../types/type-area-comun';
 
@@ -75,6 +74,7 @@ const AreasComunesList: React.FC = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th> {/* ✅ Nuevo encabezado */}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -88,6 +88,14 @@ const AreasComunesList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {area.capacidad} personas
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm"> {/* ✅ Nueva celda */}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      area.es_de_pago ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      <FontAwesomeIcon icon={area.es_de_pago ? faDollarSign : faTimesCircle} className="mr-1" />
+                      {area.es_de_pago ? 'De Pago' : 'Gratis'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     ${parseFloat(area.costo_alquiler).toFixed(2)}

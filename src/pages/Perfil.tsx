@@ -23,15 +23,7 @@ export interface UserProfile {
   direccion: string | null;
   fecha_nacimiento: string | null; // 'YYYY-MM-DD'
   rol: Rol;
-  fecha_inicio_contrato: string | null;
-  fecha_fin_contrato: string | null;
-  fecha_adquisicion: string | null;
-  numero_licencia: string | null;
-  tipo_personal: string | null;
-  fecha_ingreso: string | null;
-  salario: number | null;
-  fecha_certificacion: string | null;
-  empresa: string | null;
+  
 }
 
 // 👇 Actualizado: incluye campos opcionales que pueden venir del perfil extendido
@@ -46,17 +38,13 @@ export interface AuthUser {
   sexo?: string | null;
   direccion?: string | null;
   fecha_nacimiento?: string | null;
-  tipo_personal?: string | null;
-  fecha_ingreso?: string | null;
-  salario?: number | null;
-  fecha_certificacion?: string | null;
-  empresa?: string | null;
+ 
 }
 
 // Función para obtener el perfil completo del usuario
-async function fetchUserProfile(id: number): Promise<UserProfile | null> {
+async function fetchUserProfile(): Promise<UserProfile | null> {
   try {
-    const { data } = await axiosInstance.get<UserProfile>(`/usuarios/${id}/`);
+    const { data } = await axiosInstance.get<UserProfile>('/usuarios/me/');
     return data;
   } catch (error) {
     console.error('Error al obtener el usuario:', error);
@@ -72,8 +60,6 @@ export default function Perfil() {
   const roleToChangePasswordPath: Record<string, string> = {
     Administrador: '/administrador/cambiar-contra',
     Propietario: '/propietario/cambiar-contra',
-    Portero: '/portero/cambiar-contra',
-    Empleado: '/empleado/cambiar-contra',
   };
 
   const changePasswordPath = roleToChangePasswordPath[user?.rol?.nombre || ''] || '/cambiar-contra';
@@ -81,7 +67,7 @@ export default function Perfil() {
   useEffect(() => {
     if (user?.id && !userProfile) {
       setProfileLoading(true);
-      fetchUserProfile(user.id)
+      fetchUserProfile()
         .then(data => {
           setUserProfile(data);
           setProfileLoading(false);
@@ -200,42 +186,7 @@ export default function Perfil() {
               </dl>
             </div>
 
-            {/* Sección condicional: Información Laboral (solo si aplica) */}
-            {displayUser.tipo_personal && (
-              <div className="bg-gray-50 rounded-lg p-5 sm:p-6 border border-gray-200">
-                <h2 className="font-semibold text-xl text-gray-800 mb-4 border-b pb-2">Información Laboral</h2>
-                <dl className="space-y-4 text-sm sm:text-base">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                    <dt className="text-gray-600 font-medium w-1/3">Tipo de Personal:</dt>
-                    <dd className="font-semibold text-gray-900 w-2/3 text-right">{displayUser.tipo_personal}</dd>
-                  </div>
-                  {displayUser.fecha_ingreso && (
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                      <dt className="text-gray-600 font-medium w-1/3">Fecha de Ingreso:</dt>
-                      <dd className="font-semibold text-gray-900 w-2/3 text-right">
-                        {new Date(displayUser.fecha_ingreso).toLocaleDateString()}
-                      </dd>
-                    </div>
-                  )}
-                  {displayUser.salario !== null && (
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                      <dt className="text-gray-600 font-medium w-1/3">Salario:</dt>
-                      <dd className="font-semibold text-gray-900 w-2/3 text-right">
-                        {displayUser.salario != null && (
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                            <dt className="text-gray-600 font-medium w-1/3">Salario:</dt>
-                            <dd className="font-semibold text-gray-900 w-2/3 text-right">
-                              ${Number(displayUser.salario).toFixed(2)}
-                            </dd>
-                          </div>
-                        )}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
-
+            
             <NavLink
               to={changePasswordPath}
               className="flex justify-center items-center w-full px-6 py-3 text-base font-semibold text-white transition-all duration-300 rounded-lg shadow-md bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"

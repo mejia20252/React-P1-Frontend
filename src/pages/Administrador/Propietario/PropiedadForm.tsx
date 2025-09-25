@@ -93,22 +93,22 @@ export default function PropiedadForm() {
     cargarPropiedad();
   }, [id, setValue, navigate]);
 
-  const onSubmit = async (data: PropiedadFormData) => {
+    const onSubmit = async (data: PropiedadFormData) => {
     setLoading(true);
     setError(null);
 
     try {
-      let resultado;
-
+      // Remove 'let resultado;' and the assignments if the result is not used.
+      // If you needed to do something with the result, you would keep it.
       if (modoTransferencia) {
         // Transferir propiedad
-        resultado = await propiedadApi.transferir({
+        await propiedadApi.transferir({ // No need to assign to 'resultado' if not used
           casa_id: data.casa_id,
           nuevo_propietario_id: data.propietario_id,
         });
       } else {
         // Asignar nueva propiedad
-        resultado = await propiedadApi.create(data);
+        await propiedadApi.create(data); // No need to assign to 'resultado' if not used
       }
 
       navigate('/administrador/asignar-propietario');

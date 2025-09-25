@@ -1,11 +1,11 @@
-// src/pages/Propietario/Reserva/ReservaForm.tsx (actualizado)
+// src/pages/Inquilino/Reserva/ReservaForm.tsx (actualizado)
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form'; // This is correct
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faSave, faTimes, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { reservaCreateSchema, type ReservaFormData } from '../../../schemas/schema-reserva';
 import { toUiError } from '../../../api/error';
 import { reservaApi } from '../../../api/api-reserva';
@@ -76,7 +76,7 @@ const ReservaForm: React.FC = () => {
         loadDependencies();
     }, [id, isEdit, setValue]);
 
-    const onSubmit = async (data: ReservaFormData) => {
+   const onSubmit = async (data: ReservaFormData) => {
         setTopError('');
 
         try {
@@ -86,12 +86,12 @@ const ReservaForm: React.FC = () => {
                 await reservaApi.create(data);
             }
 
-            // MODIFICAR ESTA LÍNEA
-            navigate('/inquilino/reservas'); // CAMBIADO DE '/propietario/reservas'
+            navigate('/inquilino/reservas');
         } catch (error) {
             const uiError = toUiError(error);
             if (uiError.fields) {
-                Object.keys(uiError.fields).forEach(field => {
+                // MODIFICACIÓN AQUÍ: Removido 'field' ya que no se usa.
+                Object.keys(uiError.fields).forEach(() => {
                     // Consider using setError from react-hook-form if you want field-specific errors
                 });
                 setTopError(uiError.message || 'Error de validación en el servidor.');

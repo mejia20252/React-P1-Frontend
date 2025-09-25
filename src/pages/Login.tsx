@@ -27,10 +27,8 @@ const Login: React.FC = () => {
       if (user) await signout();
 
       const me = await signin(username, password);
-      console.log('este es el usuario', me);
 
       if (!me.rol) {
-        console.log('si entra aqui');
         navigate('/unauthorized', { replace: true });
         return;
       }

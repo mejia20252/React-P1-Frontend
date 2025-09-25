@@ -8,7 +8,9 @@ const roleHome = (role?: string) => {
     case 'Administrador': return '/administrador'
     case 'Propietario':       return '/propietario'
     case 'Inquilino':       return '/inquilino'
-    default: return '/unauthorized'; // CAMBIAR AQUI
+    case 'Seguridad':       return '/seguridad'
+    case 'Trabajador':       return '/trabajador'
+    default: return '/unauthorized'; 
   }
 }
 
