@@ -2,15 +2,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar } from '@fortawesome/free-solid-svg-icons'; // Ícono de reservar
+//import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+//import { faCalendar } from '@fortawesome/free-solid-svg-icons'; // Ícono de reservar
 import { areaComunApi } from '../../../api/api-area-comun';
 import type { AreaComun } from '../../../types/type-area-comun';
+//import { useNavigate } from 'react-router-dom';
 
 const AreasComunesList: React.FC = () => {
   const [areas, setAreas] = useState<AreaComun[]>([]);
   const [loading, setLoading] = useState(true);
   const [topError, setTopError] = useState('');
+//    const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,9 +32,6 @@ const AreasComunesList: React.FC = () => {
   }, []);
 
   // Placeholder: función vacía por ahora
-  const handleReservar = (id: number) => {
-    alert(`Reservar área con ID: ${id} (función aún no implementada)`);
-  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -83,7 +82,8 @@ const AreasComunesList: React.FC = () => {
                       {area.estado}
                     </span>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
+                  {/*
+                  /<td className="px-4 py-4 whitespace-nowrap text-sm font-medium sm:px-6">
                     <button
                       onClick={() => handleReservar(area.id)}
                       className="bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-1"
@@ -91,9 +91,9 @@ const AreasComunesList: React.FC = () => {
                     >
                       <FontAwesomeIcon icon={faCalendar} size="sm" />
                       <span className="hidden sm:inline">Reservar</span>
-                      <span className="sm:hidden">Res</span> {/* Versión compacta en móvil */}
-                    </button>
-                  </td>
+                      <span className="sm:hidden"></span> 
+                    </button> 
+                  </td>*/}
                 </tr>
               ))}
             </tbody>

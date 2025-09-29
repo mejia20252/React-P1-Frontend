@@ -10,6 +10,7 @@ import type { AreaComun } from '../../../types/type-area-comun';
 const AreasComunesList: React.FC = () => {
   const [areas, setAreas] = useState<AreaComun[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [topError, setTopError] = useState('');
 
   useEffect(() => {

@@ -7,7 +7,7 @@ interface PagoExitosoProps {
     redirectPath?: string; // Prop opcional para la ruta de redirección
 }
 
-const PagoExitoso: React.FC<PagoExitosoProps> = ({ redirectPath = '/inquilino/cuotas' }) => { // Valor por defecto para inquilino
+const CuotaPagoExitoso: React.FC<PagoExitosoProps> = ({ redirectPath = '/inquilino/cuotas' }) => { // Valor por defecto para inquilino
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -34,4 +34,4 @@ const PagoExitoso: React.FC<PagoExitosoProps> = ({ redirectPath = '/inquilino/cu
     );
 };
 
-export default PagoExitoso;
+export default CuotaPagoExitoso;

@@ -75,8 +75,8 @@ const PagarReserva: React.FC = () => {
                 {
                     tipo_objeto: 'reserva',
                     objeto_id: reserva.id,
-                    success_url: window.location.origin + '/pago-exitoso',
-                    cancel_url: window.location.origin + '/pago-cancelado',
+                    success_url: window.location.origin + '/inquilino/reserva-pago-exitoso',
+                    cancel_url: window.location.origin + '/inquilino/reserva-pago-cancelado',
                 }
             );
 

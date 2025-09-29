@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
-const PagoCancelado: React.FC = () => {
+const CuotaPagoCancelado: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,4 +30,4 @@ const PagoCancelado: React.FC = () => {
     );
 };
 
-export default PagoCancelado;
+export default CuotaPagoCancelado;

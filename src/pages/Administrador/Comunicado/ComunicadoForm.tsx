@@ -1,293 +1,339 @@
-// src/pages/Administrador/Comunicado/ComunicadoForm.tsx
 'use client';
 
+// src/pages/Administrador/Comunicado/ComunicadoForm.tsx
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faArrowLeft, faSave } from '@fortawesome/free-solid-svg-icons';
-import { comunicadoApi } from '../../../api/api-comunicado';
-import { casaApi } from '../../../api/api-casa';
-import type { Casa } from '../../../types/type-casa';
-import type { ComunicadoFormData } from '../../../schemas/schema-comunicado';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
+import api from '../../../app/axiosInstance';
 import { toUiError } from '../../../api/error';
-import { useForm, type SubmitHandler, type Resolver } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { comunicadoCreateSchemaWithValidation } from '../../../schemas/schema-comunicado';
+
+// --- INLINE BackButton Component ---
+const BackButton: React.FC = () => {
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate(-1)}
+      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
+    >
+      <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Volver
+    </button>
+  );
+};
+
+// --- INLINE Spinner Component ---
+interface SpinnerProps {
+  size?: 'small' | 'medium' | 'large';
+}
+
+const Spinner: React.FC<SpinnerProps> = ({ size = 'medium' }) => {
+  const sizeClasses = {
+    small: 'w-4 h-4 border-2',
+    medium: 'w-8 h-8 border-4',
+    large: 'w-12 h-12 border-4',
+  };
+
+  return (
+    <div className="flex justify-center items-center">
+      <div
+        className={`animate-spin rounded-full ${sizeClasses[size]} border-t-transparent border-indigo-500 dark:border-indigo-300`}
+        role="status"
+      >
+        <span className="sr-only">Cargando...</span>
+      </div>
+    </div>
+  );
+};
+
+
+// Tipos de datos para el comunicado
+interface ComunicadoFormData {
+  titulo: string;
+  contenido: string;
+  estado: 'borrador' | 'publicado' | 'archivado';
+  casa_destino: number | null;
+  archivo_adjunto: FileList | null;
+  fecha_expiracion: string | null;
+  send_notification?: boolean; // Campo para indicar si se envía notificación
+  target_recipients?: string; // Campo para especificar el grupo de destinatarios
+}
+
+interface Casa {
+  id: number;
+  nombre: string;
+}
+
+interface UsuarioSimple {
+  id: number;
+  nombre: string;
+  apellido_paterno: string;
+  username: string;
+}
 
 const ComunicadoForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const isEdit = Boolean(id);
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
-  const [topError, setTopError] = useState('');
-  const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
   const [casas, setCasas] = useState<Casa[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioSimple[]>([]); // Para el destinatario único
+  const isEditing = !!id;
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { isSubmitting, errors },
-  } = useForm<ComunicadoFormData>({
-    resolver: zodResolver(comunicadoCreateSchemaWithValidation) as unknown as Resolver<
-      ComunicadoFormData,
-      any
-    >,
-    defaultValues: {
-      titulo: '',
-      contenido: '',
-      fecha_publicacion: null,
-      estado: 'borrador',
-      casa_destino: null,
-      fecha_expiracion: null,
-    },
-  });
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<ComunicadoFormData>();
 
-  const estadoValue = watch('estado');
+  const estadoWatch = watch('estado'); // Observar el campo 'estado'
+  const sendNotificationWatch = watch('send_notification'); // Observar el campo 'send_notification'
 
-  // Cargar casas y datos si es edición
   useEffect(() => {
-    const loadDependencies = async () => {
-      setLoading(true); // Start loading when dependencies are being loaded
+    const fetchFormData = async () => {
+      setLoading(true);
       try {
-        const casasData = await casaApi.getAll();
-        setCasas(casasData);
+        const [casasRes, usuariosRes] = await Promise.all([
+          api.get('/casas/'),
+          // Obtener usuarios con roles relevantes, incluyendo 'Seguridad'
+          api.get('/usuarios/?rol__nombre=Propietario,Inquilino,Administrador,Trabajador,Seguridad') 
+        ]);
+        setCasas(casasRes.data);
+        setUsuarios(usuariosRes.data);
 
-        if (isEdit && id) {
-          const comunicado = await comunicadoApi.getById(Number(id));
+        if (isEditing) {
+          const comunicadoRes = await api.get(`/comunicados/${id}/`);
+          const comunicadoData = comunicadoRes.data;
+          
+          const formattedFechaExpiracion = comunicadoData.fecha_expiracion 
+            ? new Date(comunicadoData.fecha_expiracion).toISOString().split('T')[0] 
+            : '';
 
-          setValue('titulo', comunicado.titulo);
-          setValue('contenido', comunicado.contenido);
-          // Assuming fecha_publicacion and fecha_expiracion are ISO strings or null
-          setValue('fecha_publicacion', comunicado.fecha_publicacion ? new Date(comunicado.fecha_publicacion).toISOString().slice(0, 16) : null);
-          setValue('estado', comunicado.estado);
-          setValue('casa_destino', comunicado.casa_destino);
-          setValue('fecha_expiracion', comunicado.fecha_expiracion ? new Date(comunicado.fecha_expiracion).toISOString().slice(0, 16) : null);
+          reset({
+            titulo: comunicadoData.titulo,
+            contenido: comunicadoData.contenido,
+            estado: comunicadoData.estado,
+            casa_destino: comunicadoData.casa_destino || null,
+            fecha_expiracion: formattedFechaExpiracion,
+          });
         }
       } catch (error) {
-        console.error('Error al cargar datos:', error);
-        setTopError('Error al cargar datos necesarios.');
+        toast.error(toUiError(error).message);
       } finally {
-        setLoading(false); // End loading regardless of success or failure
+        setLoading(false);
       }
     };
 
-    loadDependencies();
-  }, [id, isEdit, setValue]);
+    fetchFormData();
+  }, [id, isEditing, reset]);
 
-  const onSubmit: SubmitHandler<ComunicadoFormData> = async (data) => {
-    setTopError('');
-    setServerErrors({});
+  const onSubmit = async (data: ComunicadoFormData) => {
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('titulo', data.titulo);
+    formData.append('contenido', data.contenido);
+    formData.append('estado', data.estado);
+
+    if (data.casa_destino) {
+      formData.append('casa_destino', data.casa_destino.toString());
+    }
+    if (data.fecha_expiracion) {
+      formData.append('fecha_expiracion', data.fecha_expiracion + 'T23:59:59Z'); 
+    }
+    if (data.archivo_adjunto && data.archivo_adjunto.length > 0) {
+      formData.append('archivo_adjunto', data.archivo_adjunto[0]);
+    }
+
+    formData.append('send_notification', data.send_notification ? 'true' : 'false');
+    if (data.target_recipients) {
+        formData.append('target_recipients', data.target_recipients);
+    }
 
     try {
-      const formData = new FormData();
-
-      formData.append('titulo', data.titulo);
-      formData.append('contenido', data.contenido);
-      formData.append('estado', data.estado);
-
-      // Ensure dates are sent explicitly, even if null.
-      // If data.fecha_publicacion is null, an empty string will be sent, which the backend should interpret as null.
-      // If it's an ISO string, the string will be sent.
-      formData.append('fecha_publicacion', data.fecha_publicacion || '');
-      formData.append('fecha_expiracion', data.fecha_expiracion || '');
-
-      // If casa_destino is null, an empty string is sent.
-      formData.append('casa_destino', data.casa_destino ? data.casa_destino.toString() : '');
-
-      if (isEdit && id) {
-        await comunicadoApi.update(Number(id), formData as any);
+      if (isEditing) {
+        await api.patch(`/comunicados/${id}/`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        toast.success('Comunicado actualizado exitosamente.');
       } else {
-        await comunicadoApi.create(formData as any);
+        await api.post('/comunicados/', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        toast.success('Comunicado creado exitosamente.');
       }
-
       navigate('/administrador/comunicados');
     } catch (error) {
-      const uiError = toUiError(error);
-      if (uiError.fields) {
-        setServerErrors(uiError.fields);
-      } else if (uiError.message) {
-        setTopError(uiError.message);
-      } else {
-        setTopError('Error al guardar el comunicado.');
-      }
+      toast.error(toUiError(error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading && isEdit) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p>Cargando...</p>
-      </div>
-    );
+  if (loading && !casas.length) {
+    return <Spinner />;
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-3xl bg-white rounded-lg shadow-xl p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {isEdit ? 'Editar Comunicado' : 'Nuevo Comunicado'}
-          </h2>
-          <button
-            onClick={() => navigate('/administrador/comunicados')}
-            className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
-            aria-label="Cerrar"
-          >
-            <FontAwesomeIcon icon={faTimes} size="lg" />
-          </button>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+          {isEditing ? 'Editar Comunicado' : 'Nuevo Comunicado'}
+        </h1>
+        <BackButton />
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 space-y-6">
+        {/* Título */}
+        <div>
+          <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Título
+          </label>
+          <input
+            id="titulo"
+            type="text"
+            {...register('titulo', { required: 'El título es obligatorio' })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+          />
+          {errors.titulo && <p className="mt-1 text-sm text-red-600">{errors.titulo.message}</p>}
         </div>
 
-        {topError && (
-          <div className="mb-4 p-3 rounded-md bg-red-100 border border-red-200 text-red-700 text-sm">
-            {topError}
+        {/* Contenido */}
+        <div>
+          <label htmlFor="contenido" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Contenido
+          </label>
+          <textarea
+            id="contenido"
+            rows={5}
+            {...register('contenido', { required: 'El contenido es obligatorio' })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+          ></textarea>
+          {errors.contenido && <p className="mt-1 text-sm text-red-600">{errors.contenido.message}</p>}
+        </div>
+
+        {/* Estado */}
+        <div>
+          <label htmlFor="estado" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Estado
+          </label>
+          <select
+            id="estado"
+            {...register('estado', { required: 'El estado es obligatorio' })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="borrador">Borrador</option>
+            <option value="publicado">Publicado</option>
+            <option value="archivado">Archivado</option>
+          </select>
+          {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado.message}</p>}
+        </div>
+
+        {/* Casa Destino (Opcional) */}
+        <div>
+          <label htmlFor="casa_destino" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Casa Destino (Opcional, si es para una casa específica)
+          </label>
+          <select
+            id="casa_destino"
+            {...register('casa_destino')}
+            // Add a specific class or directly apply styles for better visibility
+            // The following classes are designed to ensure text is visible even with a blue background
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white
+            [&_option]:bg-white [&_option]:text-gray-900 dark:[&_option]:bg-gray-700 dark:[&_option]:text-white
+            dark:[&_option:hover]:bg-indigo-600 dark:[&_option:hover]:text-white
+            [&_option:checked]:bg-indigo-600 [&_option:checked]:text-white dark:[&_option:checked]:bg-indigo-600 dark:[&_option:checked]:text-white
+            "
+          >
+            <option value="">Todo el Condominio (por defecto)</option>
+            {casas.map((casa) => (
+              <option key={casa.id} value={casa.id}>
+                {casa.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Fecha de Expiración (Opcional) */}
+        <div>
+          <label htmlFor="fecha_expiracion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Fecha de Expiración (Opcional)
+          </label>
+          <input
+            id="fecha_expiracion"
+            type="date"
+            {...register('fecha_expiracion')}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+          />
+        </div>
+
+        {/* Archivo Adjunto (Opcional) */}
+        <div>
+          <label htmlFor="archivo_adjunto" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Archivo Adjunto (PDF, Imagen)
+          </label>
+          <input
+            id="archivo_adjunto"
+            type="file"
+            {...register('archivo_adjunto')}
+            accept=".pdf,.jpg,.jpeg,.png"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:bg-gray-700 dark:text-white dark:file:bg-indigo-700 dark:file:text-white dark:hover:file:bg-indigo-600"
+          />
+        </div>
+
+        {/* Sección de Notificaciones Push (Visible solo si el estado es 'publicado') */}
+        {estadoWatch === 'publicado' && (
+          <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md shadow-inner border border-gray-200 dark:border-gray-700 mt-6">
+            <div className="flex items-center mb-4">
+              <input
+                id="send_notification"
+                type="checkbox"
+                {...register('send_notification')}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label htmlFor="send_notification" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Enviar Notificación Push (solo si es nuevo o se republica)
+              </label>
+            </div>
+
+            {sendNotificationWatch && (
+              <div>
+                <label htmlFor="target_recipients" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Enviar a:
+                </label>
+                <select
+                  id="target_recipients"
+                  {...register('target_recipients')}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Según Casa Destino (o todo el condominio)</option>
+                  <option value="todos">Todos los usuarios registrados</option>
+                  <option value="administradores">Solo Administradores</option>
+                  <option value="propietarios">Solo Propietarios</option>
+                  <option value="inquilinos">Solo Inquilinos</option>
+                  <option value="trabajadores">Solo Trabajadores</option>
+                  <option value="seguridad">Solo Seguridad</option> {/* <--- NUEVA OPCIÓN */}
+                  <optgroup label="Usuario Específico">
+                    {usuarios.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.nombre} {user.apellido_paterno} ({user.username})
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                {errors.target_recipients && <p className="mt-1 text-sm text-red-600">{errors.target_recipients.message}</p>}
+              </div>
+            )}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
-          {/* Título */}
-          <div>
-            <label htmlFor="titulo" className="block text-sm font-medium text-gray-700 mb-1">
-              Título *
-            </label>
-            <input
-              type="text"
-              id="titulo"
-              {...register('titulo')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.titulo || serverErrors.titulo ? 'border-red-500' : 'border-gray-300'
-                }`}
-              placeholder="Ej: Aviso de corte de agua"
-            />
-            {errors.titulo && <p className="mt-1 text-sm text-red-600">{errors.titulo.message}</p>}
-            {serverErrors.titulo?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
-          </div>
-
-          {/* Contenido */}
-          <div>
-            <label htmlFor="contenido" className="block text-sm font-medium text-gray-700 mb-1">
-              Contenido *
-            </label>
-            <textarea
-              id="contenido"
-              {...register('contenido')}
-              rows={5}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.contenido || serverErrors.contenido ? 'border-red-500' : 'border-gray-300'
-                }`}
-              placeholder="Escribe aquí el contenido del comunicado..."
-            />
-            {errors.contenido && <p className="mt-1 text-sm text-red-600">{errors.contenido.message}</p>}
-            {serverErrors.contenido?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
-          </div>
-
-          {/* Estado */}
-          <div>
-            <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
-              Estado
-            </label>
-            <select
-              id="estado"
-              {...register('estado')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.estado || serverErrors.estado ? 'border-red-500' : 'border-gray-300'
-                }`}
-            >
-              <option value="borrador">Borrador</option>
-              <option value="publicado">Publicado</option>
-              <option value="archivado">Archivado</option>
-            </select>
-            {errors.estado && <p className="mt-1 text-sm text-red-600">{errors.estado.message}</p>}
-            {serverErrors.estado?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
-          </div>
-
-          {/* Fecha de Publicación (requerida si estado=publicado) */}
-          <div>
-            <label htmlFor="fecha_publicacion" className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha de Publicación {estadoValue === 'publicado' && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              type="datetime-local"
-              id="fecha_publicacion"
-              {...register('fecha_publicacion')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.fecha_publicacion || serverErrors.fecha_publicacion ? 'border-red-500' : 'border-gray-300'
-                }`}
-              disabled={estadoValue !== 'publicado'}
-            />
-            {errors.fecha_publicacion && <p className="mt-1 text-sm text-red-600">{errors.fecha_publicacion.message}</p>}
-            {serverErrors.fecha_publicacion?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
-          </div>
-
-          {/* Casa Destino (opcional) */}
-          <div>
-            <label htmlFor="casa_destino" className="block text-sm font-medium text-gray-700 mb-1">
-              Casa Destino (opcional)
-            </label>
-            <select
-              id="casa_destino"
-              {...register('casa_destino', { valueAsNumber: true })}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.casa_destino || serverErrors.casa_destino ? 'border-red-500' : 'border-gray-300'
-                }`}
-            >
-              <option value="">Todo el condominio</option>
-              {casas.map(casa => (
-                <option key={casa.id} value={casa.id}>
-                  Casa #{casa.numero_casa}
-                </option>
-              ))}
-            </select>
-            {errors.casa_destino && <p className="mt-1 text-sm text-red-600">{errors.casa_destino.message}</p>}
-            {serverErrors.casa_destino?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
-          </div>
-
-          {/* Fecha de Expiración (opcional) */}
-          <div>
-            <label htmlFor="fecha_expiracion" className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha de Expiración (opcional)
-            </label>
-            <input
-              type="datetime-local"
-              id="fecha_expiracion"
-              {...register('fecha_expiracion')}
-              className={`w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.fecha_expiracion || serverErrors.fecha_expiracion ? 'border-red-500' : 'border-gray-300'
-                }`}
-            />
-            {errors.fecha_expiracion && <p className="mt-1 text-sm text-red-600">{errors.fecha_expiracion.message}</p>}
-            {serverErrors.fecha_expiracion?.map((m, i) => <p key={i} className="mt-1 text-sm text-red-600">{m}</p>)}
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => navigate('/administrador/comunicados')}
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`flex items-center px-4 py-2 text-sm font-medium text-white rounded-md transition-colors duration-200 ${isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <FontAwesomeIcon icon={faSave} className="mr-2" />
-                  {isEdit ? 'Actualizar' : 'Crear'}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Botón de Enviar */}
+        <div className="flex justify-end mt-6">
+          <button
+            type="submit"
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-800"
+            disabled={loading}
+          >
+            {loading ? <Spinner size="small" /> : (isEditing ? 'Actualizar Comunicado' : 'Crear Comunicado')}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

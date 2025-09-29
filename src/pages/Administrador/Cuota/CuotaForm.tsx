@@ -170,7 +170,7 @@ const CuotaForm: React.FC = () => {
             >
               <option value="">Selecciona una casa</option>
               {casas.map(casa => (
-                <option key={casa.id} value={casa.id}>Casa #{casa.numero}</option>
+                <option key={casa.id} value={casa.id}>Casa #{casa.numero_casa}</option>
               ))}
             </select>
             {errors.casa && <p className="mt-1 text-sm text-red-600">{errors.casa.message}</p>}

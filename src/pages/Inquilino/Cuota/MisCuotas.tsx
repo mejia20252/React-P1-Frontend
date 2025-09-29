@@ -88,8 +88,8 @@ const MisCuotas: React.FC = () => {
                     objeto_id: cuotaId,
                     // Asegúrate de que estas URLs de éxito/cancelación redirijan correctamente
                     // a una página dentro de tu aplicación que el inquilino pueda ver.
-                    success_url: window.location.origin + '/pago-exitoso',
-                    cancel_url: window.location.origin + '/pago-cancelado',
+                    success_url: window.location.origin + '/inquilino/pago-exitoso',
+                    cancel_url: window.location.origin + '/inquilino/pago-cancelado',
                 }
             );
 

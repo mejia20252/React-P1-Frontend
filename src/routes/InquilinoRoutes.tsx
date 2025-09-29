@@ -21,6 +21,8 @@ import PagoList from '../pages/Inquilino/Pago/PagoList.tsx';
 import ReservaList from '../pages/Inquilino/Reserva/ReservaList.tsx';
 import ReservaForm from '../pages/Inquilino/Reserva/ReservaForm.tsx';
 import PagarReserva from '../pages/Inquilino/Reserva/PagarReserva.tsx';
+import ReservaPagoCancelado from '../pages/Inquilino/Reserva/ReservaPagoCancelado.tsx';
+import ReservaPagoExitoso from '../pages/Inquilino/Reserva/ReservaPagoExitoso.tsx';
 
 import AreasComunesList from '../pages/Inquilino/AreaComun/AreasComunesList.tsx'
 import VehiculoList from '../pages/Propietario/Vehiculo/VehiculoList.tsx';
@@ -28,6 +30,11 @@ import VehiculoList from '../pages/Propietario/Vehiculo/VehiculoList.tsx';
 import MascotaList from '../pages/Propietario/Mascota/MascotaList.tsx'
 
 import MisCuotas from '../pages/Inquilino/Cuota/MisCuotas.tsx';
+import CuotaPagoCancelado from '../pages/Inquilino/Cuota/CuotaPagoCancelado.tsx';
+import CuotaPagoExitoso from '../pages/Inquilino/Cuota/CuotaPagoExitoso.tsx';
+
+
+
 const InquilinoRoutes: React.FC = () => (
     <ProtectedRoute requiredRoles={["Inquilino"]}>
         <Routes>
@@ -56,11 +63,18 @@ const InquilinoRoutes: React.FC = () => (
 
 
             <Route path="pagos" element={<PagoList />} />
+            <Route path="pago-exitoso" element={<CuotaPagoExitoso />} />
+            <Route path="pago-cancelado" element={<CuotaPagoCancelado />} />
+
+            <Route path="/reserva-pago-exitoso" element={<ReservaPagoExitoso />} />
+            <Route path="/reserva-pago-cancelado" element={<ReservaPagoCancelado />} />
+         
+
             <Route path="casas" element={<CasaList />} />
             <Route path='/cambiar-contra' element={<ChangePassword />} />
             <Route path='/perfil' element={<Perfil />} />
             <Route path='/cuotas' element={<MisCuotas />} />
-            // App.tsx o donde tengas tus rutas
+            
 
 
 
